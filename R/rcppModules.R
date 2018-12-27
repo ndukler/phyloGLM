@@ -1,0 +1,1 @@
+Rcpp::loadModule("paramIndex", TRUE)

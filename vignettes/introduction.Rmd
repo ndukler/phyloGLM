@@ -1,0 +1,40 @@
+---
+title: "Introduction to phyloGLM"
+author: "Noah Dukler"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+First create some data and a tree. Pretend that sites are split into two classes, "Enhancer" and "Promoter" and also split by ontology classes "A" and "B".
+
+```{r}
+library(epiAlleleGLM)
+## Set seed for consistency
+set.seed(123)
+## Simulate random data
+species=c("A","B","C","D","E")
+aData=lapply(as.list(species),function(x) matrix(runif(120),ncol=3))
+names(aData)=species
+
+## Create test trees, both one that will fail, and one that will pass
+tree=ape::rtree(n = length(species),tip.label = species)
+
+## Create a data frame with labels
+siteLabels=data.frame(cre.class=rep(c("Enhancer","Promoter"),each=nrow(aData[[1]])/2),
+                      go.class=rep(c("A","B"),times=nrow(aData[[1]])/2))
+```
+Now create the allele data object:
+
+```{r,echo=FALSE}
+ad=alleleData(data=aData,tree=tree,siteInfo = siteLabels)
+```
+
+Now create a rate model specifying that genomic regions should be seperated by both cre.class and go.class.
+
+```{r}
+rateMod=rateModel(data = ad,rateFormula=formula(~cre.class+go.class))
+```

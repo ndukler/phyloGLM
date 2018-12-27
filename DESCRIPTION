@@ -1,0 +1,36 @@
+Package: phyloGLM
+Type: Package
+Title: Tests for signals of variable rates of evolution between gene classes and lineages for probabalistic alleles
+Version: 0.1
+Date: 2018-08-16
+Author: Noah Dukler
+Maintainer: Noah Dukler <ndukler@cshl.edu>
+Description: One paragraph description of what the package does as one or more full sentences.
+License: GPL (>= 2)
+biocViews:
+Imports: Rcpp (>= 1.0.0),
+         RcppArmadillo,
+         data.table,
+         ape,
+         methods
+LinkingTo: Rcpp,
+           RcppArmadillo
+RcppModules: paramIndex
+Suggests: 
+    testthat,
+    knitr,
+    rmarkdown
+Encoding: UTF-8
+RoxygenNote: 6.1.1
+Collate: 
+    'RcppExports.R'
+    'alleleDataValidityCheck.R'
+    'alleleData-class.R'
+    'rateModelValidityCheck.R'
+    'rateModel-class.R'
+    'getEdgeTable.R'
+    'getSiteInfo.R'
+    'package.R'
+    'rcppModules.R'
+    'readPAF.R'
+VignetteBuilder: knitr
