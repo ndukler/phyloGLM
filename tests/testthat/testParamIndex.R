@@ -19,11 +19,11 @@ testthat::test_that("paramIndex sorts correctly",{
 
 ## Test that the index queries correctly
 testthat::test_that("paramIndex queries correctly",{
-  testthat::expect_equal(foo$getIndex(1,1),0)
+  testthat::expect_equal(foo$getIndex(1,1,FALSE),0)
 })
 testthat::test_that("paramIndex queries correctly",{
-  testthat::expect_equal(foo$getIndex(1,3),2)
+  testthat::expect_equal(foo$getIndex(1,3,FALSE),2)
 })
 testthat::test_that("paramIndex queries correctly",{
-  testthat::expect_equal(foo$getIndex(4,5),5)
+  testthat::expect_equal(foo$getIndex(4,5,FALSE),5)
 })

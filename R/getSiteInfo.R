@@ -1,9 +1,9 @@
 #' Extract site information table
 #'
 #' Extracts site information table
-#' @docType methods
 #' @param obj alleleData or rateModel object
-#' @rdname getSiteInfo
+#' @name getSiteInfo
+#' @rdname getSiteInfo-methods
 #' @return data.table containing site info
 #' @include alleleData-class.R
 #' @include rateModel-class.R
@@ -12,13 +12,15 @@ methods::setGeneric("getSiteInfo", function(obj) {
   standardGeneric("getSiteInfo")
 })
 
-#' @rdname getSiteInfo
+#' @name getSiteInfo
+#' @rdname getSiteInfo-methods
 #' @aliases getSiteInfo,alleleData,alleleData-method
 methods::setMethod("getSiteInfo", signature(obj = "alleleData"), function(obj) {
   return(obj@siteInfo)
 })
 
-#' @rdname getSiteInfo
+#' @name getSiteInfo
+#' @rdname getSiteInfo-methods
 #' @aliases getSiteInfo,rateModel,rateModel-method
 methods::setMethod("getSiteInfo", signature(obj = "rateModel"), function(obj) {
   return(getSiteInfo(getAlleleData(obj)))

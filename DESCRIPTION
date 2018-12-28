@@ -15,7 +15,8 @@ Imports: Rcpp (>= 1.0.0),
          methods
 LinkingTo: Rcpp,
            RcppArmadillo
-RcppModules: paramIndex
+RcppModules: paramIndex,
+             phylogeny
 Suggests: 
     testthat,
     knitr,
