@@ -20,6 +20,8 @@ public:
             Rcpp::IntegerVector pGroups, Rcpp::IntegerVector pCol, Rcpp::StringVector pNm);
   double rate(const int group,const Rcpp::NumericVector& siteX);
   double pi(const Rcpp::NumericVector& siteX);
+  Rcpp::DataFrame getRateIndex();
+  Rcpp::DataFrame getPiIndex();
 };
 
 #endif

@@ -9,8 +9,7 @@
 #' @slot rateDM the design matrix for the rate
 #' @slot piDM the design matrix for pi
 #' @slot params a vector of parameter values
-#' @slot rateIndex a parameter index for the rate coefficients
-#' @slot piIndex a parameter index for the pi coefficients
+#' @slot phylogeny parameter object holding all the parameters for phylogenetic computations
 #' @slot fixed a logical vector indicating which variables are fixed
 #'
 #' @name rateModel-class
@@ -20,8 +19,7 @@
 #' @exportClass rateModel
 methods::setClass("rateModel", slots=c(alleleData = "environment",edgeGroups="data.table",
                                        rateFormula="formula",piFormula="formula",rateDM="matrix",
-                                       piDM="matrix",params="numeric",rateIndex="ANY",
-                                       piIndex="ANY",fixed="logical"),
+                                       piDM="matrix",params="numeric",phylogeny="ANY",fixed="logical"),
                   validity = rateModelValidityCheck)
 
 #' rateModel
@@ -99,18 +97,21 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   # Create parameter index
   rateP=expand.grid(group=unique(lineageTable$edgeGroup),column=1:ncol(rateDM)-1,
                     stringsAsFactors = FALSE)
-  rateIndex=new(paramIndex,rateP$group,rateP$column,colnames(rateDM)[rateP$column+1],0)
   piP=expand.grid(group=2:data@nAlleles-2,column=1:ncol(piDM)-1,stringsAsFactors = FALSE)
-  piIndex=new(paramIndex,piP$group,piP$col,colnames(piDM)[piP$column+1],nrow(rateP))
-  
-  ## Build the parameter vector
   params=rep(1,nrow(rateP)+nrow(piP))
+  
+  foo=new(phyloGLM:::paramIndex,rateP$group,rateP$column,colnames(rateDM)[rateP$column+1],0)
+  foo$getIndex(0,0:2,TRUE)
+  phy=new(phyloGLM:::phylogeny,params,rateP$group,rateP$column,colnames(rateDM)[rateP$column+1],
+          piP$group,piP$col,colnames(piDM)[piP$column+1])
+  phy$rate(0,c(1,1,1))  
+  ## Build the parameter vector
   
   ## Set fixed vector to default to FALSE
   fixed=logical(length(params))
   
   ## ** Object construction ** ##
   methods::new("rateModel",alleleData=adEnviron,edgeGroups=lineageTable,rateFormula=rateFormula,
-               piFormula=piFormula,rateDM=rateDM,piDM=piDM,params=params,rateIndex=rateIndex,piIndex=piIndex,
+               piFormula=piFormula,rateDM=rateDM,piDM=piDM,params=params,phylogeny=phy,
                fixed=fixed)
 }
