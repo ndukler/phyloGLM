@@ -8,7 +8,6 @@
 #' @slot piFormula A formula that uses the variables in the allele data object to compute pi
 #' @slot rateDM the design matrix for the rate
 #' @slot piDM the design matrix for pi
-#' @slot params a vector of parameter values
 #' @slot phylogeny parameter object holding all the parameters for phylogenetic computations
 #' @slot fixed a logical vector indicating which variables are fixed
 #'
@@ -19,7 +18,7 @@
 #' @exportClass rateModel
 methods::setClass("rateModel", slots=c(alleleData = "environment",edgeGroups="data.table",
                                        rateFormula="formula",piFormula="formula",rateDM="matrix",
-                                       piDM="matrix",params="numeric",phylogeny="ANY",fixed="logical"),
+                                       piDM="matrix",phylogeny="ANY",fixed="logical"),
                   validity = rateModelValidityCheck)
 
 #' rateModel
@@ -98,14 +97,13 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   rateP=expand.grid(group=unique(lineageTable$edgeGroup),column=1:ncol(rateDM)-1,
                     stringsAsFactors = FALSE)
   piP=expand.grid(group=2:data@nAlleles-2,column=1:ncol(piDM)-1,stringsAsFactors = FALSE)
+  ## Create parameter vector
   params=rep(1,nrow(rateP)+nrow(piP))
-  
-  foo=new(phyloGLM:::paramIndex,rateP$group,rateP$column,colnames(rateDM)[rateP$column+1],0)
-  foo$getIndex(0,0:2,TRUE)
+  ## Collect tree info in list
+  treeInfo=list(getTree(data)$edge-1,getTree(data)$edge.length,length(getTree(data)$tip.label))
+  ## Create phylogeny object in c++
   phy=new(phyloGLM:::phylogeny,params,data.frame(rateP$group,rateP$column,colnames(rateDM)[rateP$column+1]),
-          data.frame(piP$group,piP$col,colnames(piDM)[piP$column+1]),lineageTable$edgeGroup)
-  phy$rate(0,c(1,1,1))  
-  ## Build the parameter vector
+          data.frame(piP$group,piP$col,colnames(piDM)[piP$column+1]),lineageTable$edgeGroup,treeInfo)
   
   ## Set fixed vector to default to FALSE
   fixed=logical(length(params))

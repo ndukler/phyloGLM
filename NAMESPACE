@@ -3,6 +3,7 @@
 export(alleleData)
 export(getEdgeTable)
 export(getSiteInfo)
+export(getTree)
 export(rateModel)
 export(readPAF)
 exportClasses(alleleData)

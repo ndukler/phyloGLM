@@ -23,9 +23,7 @@ Class \code{rateModel} holds a rate model for a set of alleles
 
 \item{\code{params}}{a vector of parameter values}
 
-\item{\code{rateIndex}}{a parameter index for the rate coefficients}
-
-\item{\code{piIndex}}{a parameter index for the pi coefficients}
+\item{\code{phylogeny}}{parameter object holding all the parameters for phylogenetic computations}
 
 \item{\code{fixed}}{a logical vector indicating which variables are fixed}
 }}

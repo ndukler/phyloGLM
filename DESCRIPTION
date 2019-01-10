@@ -31,6 +31,7 @@ Collate:
     'rateModel-class.R'
     'getEdgeTable.R'
     'getSiteInfo.R'
+    'getTree.R'
     'package.R'
     'rcppModules.R'
     'readPAF.R'
