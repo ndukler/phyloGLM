@@ -90,7 +90,7 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
     piDM=stats::model.matrix(piFormula,getSiteInfo(data))
   }
   
-  ## Standardize format for lineageTable
+  ## Standardize format for lineageTable and sort by child
   data.table::setcolorder(lineageTable,c("parent","child","edgeGroup"))
   data.table::setkeyv(x = lineageTable,cols = c("child"))
   
@@ -102,8 +102,8 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   
   foo=new(phyloGLM:::paramIndex,rateP$group,rateP$column,colnames(rateDM)[rateP$column+1],0)
   foo$getIndex(0,0:2,TRUE)
-  phy=new(phyloGLM:::phylogeny,params,rateP$group,rateP$column,colnames(rateDM)[rateP$column+1],
-          piP$group,piP$col,colnames(piDM)[piP$column+1])
+  phy=new(phyloGLM:::phylogeny,params,data.frame(rateP$group,rateP$column,colnames(rateDM)[rateP$column+1]),
+          data.frame(piP$group,piP$col,colnames(piDM)[piP$column+1]),lineageTable$edgeGroup)
   phy$rate(0,c(1,1,1))  
   ## Build the parameter vector
   

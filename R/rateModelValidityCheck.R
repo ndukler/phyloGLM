@@ -12,13 +12,9 @@ rateModelValidityCheck <- function(object){
   if(!setequal(data.table::key(object@edgeGroups),c("child"))){
     errors=c(errors,"Key of edgeGroups must be \'child\'")
   }
-  if(class(object@piIndex)!="Rcpp_paramIndex"){
-    errors=c(errors,"piIndex must be a \`Rcpp_paramIndex\` object")
+  if(class(object@phylogeny)!="Rcpp_phylogeny"){
+    errors=c(errors,"phylogeny must be a \`Rcpp_phylogeny\` object")
   }
-  if(class(object@rateIndex)!="Rcpp_paramIndex"){
-    errors=c(errors,"rateIndex must be a \`Rcpp_paramIndex\` object")
-  }
-  
   ## Lock the environment and all the bindings in it if all tests passed
   if (length(errors) == 0){
     lockEnvironment(env = object@alleleData,bindings = TRUE)

@@ -37,5 +37,4 @@ Now create a rate model specifying that genomic regions should be seperated by b
 
 ```{r}
 rateMod=rateModel(data = ad,rateFormula=formula(~cre.class+go.class))
-rate(rateMod@params[rateMod@rateIndex$getIndex(0,0:2,TRUE)+1],rateMod@rateDM[1,])
 ```

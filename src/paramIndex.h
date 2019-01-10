@@ -22,7 +22,6 @@ public:
   Rcpp::IntegerVector getIndex(Rcpp::IntegerVector grp, Rcpp::IntegerVector col,bool expand);
   Rcpp::DataFrame asDF();
   Rcpp::IntegerMatrix getLookup();
-  
 };
 
 #endif
