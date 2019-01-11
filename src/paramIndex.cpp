@@ -38,6 +38,9 @@ paramIndex::paramIndex(Rcpp::IntegerVector grp,Rcpp::IntegerVector col, Rcpp::St
 }
 
 Rcpp::IntegerVector paramIndex::getIndex(Rcpp::IntegerVector grp, Rcpp::IntegerVector col,bool expand){
+  // Rcpp::Rcout << "Lookup Matrix" << lookup << std::endl;
+  // Rcpp::Rcout << "Group" << grp << std::endl;
+  // Rcpp::Rcout << "Columns" << col << std::endl;
   Rcpp::IntegerVector out;
   if(!expand){
     if(grp.size() != col.size()){

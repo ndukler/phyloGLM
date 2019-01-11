@@ -99,17 +99,23 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   piP=expand.grid(group=2:data@nAlleles-2,column=1:ncol(piDM)-1,stringsAsFactors = FALSE)
   ## Create parameter vector
   params=rep(1,nrow(rateP)+nrow(piP))
+  ## Create vector of edge lengths that are indexed by the child id #  
+  eL = rep(-1,max(getTree(data)$edge[,2]))
+  eL[getTree(data)$edge[,2]] = getTree(data)$edge.length
   ## Collect tree info in list
-  treeInfo=list(getTree(data)$edge-1,getTree(data)$edge.length,length(getTree(data)$tip.label))
+  treeInfo=list(getTree(data)$edge-1, eL,length(getTree(data)$tip.label))
+  ## Create edge group vector ordered by child id #
+  eG = rep(-1,max(lineageTable$child))
+  eG[lineageTable$child]=lineageTable$edgeGroup
   ## Create phylogeny object in c++
   phy=new(phyloGLM:::phylogeny,params,data.frame(rateP$group,rateP$column,colnames(rateDM)[rateP$column+1]),
-          data.frame(piP$group,piP$col,colnames(piDM)[piP$column+1]),lineageTable$edgeGroup,treeInfo)
-  
+          data.frame(piP$group,piP$col,colnames(piDM)[piP$column+1]),eG,treeInfo)
+  phy$siteLL(ad@data,rateDM,piDM)
   ## Set fixed vector to default to FALSE
   fixed=logical(length(params))
   
   ## ** Object construction ** ##
   methods::new("rateModel",alleleData=adEnviron,edgeGroups=lineageTable,rateFormula=rateFormula,
-               piFormula=piFormula,rateDM=rateDM,piDM=piDM,params=params,phylogeny=phy,
+               piFormula=piFormula,rateDM=rateDM,piDM=piDM,phylogeny=phy,
                fixed=fixed)
 }

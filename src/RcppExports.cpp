@@ -7,11 +7,22 @@
 
 using namespace Rcpp;
 
+// logSumExp
+double logSumExp(NumericVector x);
+RcppExport SEXP _phyloGLM_logSumExp(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(logSumExp(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 RcppExport SEXP _rcpp_module_boot_paramIndex();
 RcppExport SEXP _rcpp_module_boot_phylogeny();
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_phyloGLM_logSumExp", (DL_FUNC) &_phyloGLM_logSumExp, 1},
     {"_rcpp_module_boot_paramIndex", (DL_FUNC) &_rcpp_module_boot_paramIndex, 0},
     {"_rcpp_module_boot_phylogeny", (DL_FUNC) &_rcpp_module_boot_phylogeny, 0},
     {NULL, NULL, 0}
