@@ -39,6 +39,8 @@ arma::vec phylogeny::pi(const Rcpp::NumericVector& piV){
   // Compute the numerators of the softmax function 
   for(int i=1; i < nAlleles; i++){
      // Rcpp::Rcout << "Calc pi for allele: " << i << std::endl;
+     // Get softmax params, need to subtract one from group index since there are no parameters for base
+     // level "0" of allele
     Rcpp::NumericVector par = params[piIndex.getIndex( Rcpp::IntegerVector::create(i)-1,
                                                          (Rcpp::IntegerVector) Rcpp::seq(0,piV.size()-1),true)];
    // Rcpp::Rcout << "piParams: " << par << std::endl;
