@@ -21,8 +21,6 @@ Class \code{rateModel} holds a rate model for a set of alleles
 
 \item{\code{piDM}}{the design matrix for pi}
 
-\item{\code{params}}{a vector of parameter values}
-
 \item{\code{phylogeny}}{parameter object holding all the parameters for phylogenetic computations}
 
 \item{\code{fixed}}{a logical vector indicating which variables are fixed}

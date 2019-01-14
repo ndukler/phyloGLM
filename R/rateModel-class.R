@@ -107,15 +107,14 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   ## Create edge group vector ordered by child id #
   eG = rep(-1,max(lineageTable$child))
   eG[lineageTable$child]=lineageTable$edgeGroup
-  ## Create phylogeny object in c++
-  phy=new(phyloGLM:::phylogeny,params,data.frame(rateP$group,rateP$column,colnames(rateDM)[rateP$column+1]),
-          data.frame(piP$group,piP$col,colnames(piDM)[piP$column+1]),eG,treeInfo)
-  phy$siteLL(ad@data,rateDM,piDM)
   ## Set fixed vector to default to FALSE
   fixed=logical(length(params))
   
   ## ** Object construction ** ##
   methods::new("rateModel",alleleData=adEnviron,edgeGroups=lineageTable,rateFormula=rateFormula,
-               piFormula=piFormula,rateDM=rateDM,piDM=piDM,phylogeny=phy,
+               piFormula=piFormula,rateDM=rateDM,piDM=piDM,
+               phylogeny=new(phyloGLM:::phylogeny,params,data.frame(rateP$group,
+                    rateP$column,colnames(rateDM)[rateP$column+1]),
+                    data.frame(piP$group,piP$col,colnames(piDM)[piP$column+1]),eG,treeInfo),
                fixed=fixed)
 }

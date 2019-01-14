@@ -29,11 +29,11 @@ paramIndex::paramIndex(Rcpp::IntegerVector grp,Rcpp::IntegerVector col, Rcpp::St
   group=clone(grp)[ord];
   column=clone(col)[ord];
   name=clone(nm)[ord];
-  idx=seq(0,group.size()-1);
+  idx=seq(start,(start+group.size())-1);
   // Create a matrix lookup to give row for each group/column combo
   lookup=Rcpp::IntegerMatrix(max(group)+1,max(column)+1);
   for(int i=0; i<group.size();i++){
-    lookup(group(i),column(i))=idx(i);
+    lookup(group(i),column(i))=i;
   }
 }
 

@@ -36,6 +36,7 @@ public:
   Rcpp::DataFrame getRateIndex();
   Rcpp::DataFrame getPiIndex();
   Rcpp::NumericVector getParams();
+  void setParams(Rcpp::NumericVector x, Rcpp::IntegerVector index);
 };
 
 #endif

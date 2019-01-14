@@ -9,7 +9,7 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
                      Rcpp::IntegerVector eGroup, Rcpp::List treeInfo) : 
                      rateIndex(rDF[0],rDF[1],rDF[2],0),piIndex(pDF[0],pDF[1],pDF[2],rDF.nrow()){
   params = par;
-  nAlleles = piIndex.getLookup().ncol();
+  nAlleles = piIndex.getLookup().nrow()+1; // Add one since base "0" allele level has no parameters
   edgeGroup = eGroup;
   edges = as<IntegerMatrix>(treeInfo[0]);
   edgeLength = as<NumericVector>(treeInfo[1]);
@@ -26,6 +26,9 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
 double phylogeny::rate(const int child,const Rcpp::NumericVector& siteX){
   Rcpp::NumericVector par = params[rateIndex.getIndex( Rcpp::IntegerVector::create(edgeGroup(child)),
                                                       (Rcpp::IntegerVector) Rcpp::seq(0,siteX.size()-1),true)];
+  if(siteX.size()!=par.size()){
+    Rcpp::stop("Error in rate calculation: feature/parameter vector length mismatch");
+  }
   return(std::exp(Rcpp::sum(par*siteX)));
 }
 
@@ -44,7 +47,7 @@ arma::vec phylogeny::pi(const Rcpp::NumericVector& piV){
     Rcpp::NumericVector par = params[piIndex.getIndex( Rcpp::IntegerVector::create(i)-1,
                                                          (Rcpp::IntegerVector) Rcpp::seq(0,piV.size()-1),true)];
    // Rcpp::Rcout << "piParams: " << par << std::endl;
-    p(i)=std::exp(Rcpp::sum(par*piV));
+    p(i)=std::exp(-1*Rcpp::sum(par*piV));
    // Rcpp::Rcout << "pi(i): " << p(i) << std::endl;
   }
   // Compute sum of partition function
@@ -138,7 +141,7 @@ Rcpp::NumericVector phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcp
 }
 
 /*
- * Accessor Functions
+ * Getter and setter functions
  */
 
 Rcpp::DataFrame phylogeny::getRateIndex(){
@@ -153,14 +156,23 @@ Rcpp::NumericVector phylogeny::getParams(){
   return(params);
 }
 
+void phylogeny::setParams(Rcpp::NumericVector x, Rcpp::IntegerVector index){
+  if(x.size()!=index.size()){
+    Rcpp::stop("Error when setting parameter vector: vector length mismatch");
+  }
+  params[index]=x;
+}
+
 RCPP_MODULE(phylogeny) {
   class_<phylogeny>( "phylogeny" )
   .constructor<Rcpp::NumericVector, Rcpp::DataFrame, Rcpp::DataFrame, Rcpp::IntegerVector,Rcpp::List>()
   .method("rate", &phylogeny::rate)
   .method("pi", &phylogeny::pi)
+  .method("rateMatrix",&phylogeny::rateMatrix)
   .method("getRateIndex", &phylogeny::getRateIndex)
   .method("getPiIndex", &phylogeny::getPiIndex)
-  .method("getParams", &phylogeny::getParams)
   .method("siteLL", &phylogeny::siteLL)
+  .method("getParams", &phylogeny::getParams)
+  .method("setParams", &phylogeny::setParams)
   ;
 }
