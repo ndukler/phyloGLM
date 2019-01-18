@@ -2,6 +2,8 @@
 
 export(alleleData)
 export(disCharToProb)
+export(fit)
+export(getAlleleData)
 export(getEdgeTable)
 export(getParams)
 export(getSiteInfo)

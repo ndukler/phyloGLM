@@ -56,7 +56,7 @@ arma::vec phylogeny::pi(const Rcpp::NumericVector& piV){
   return(p/Z);
 }
 
-arma::mat phylogeny::rateMatrix(const arma::vec & pi,double rate, double branchLength) {
+arma::mat phylogeny::rateMatrix(const arma::vec& pi,double rate, double branchLength) {
   // initalize temp matrix with all ones
   arma::mat temp(nAlleles,nAlleles,arma::fill::ones);
   // Set diagonal elements to zero
@@ -67,7 +67,9 @@ arma::mat phylogeny::rateMatrix(const arma::vec & pi,double rate, double branchL
   Q.diag()= -arma::sum(Q,1); 
   // Standardize rate matrix and scale by branch length and rate
   double norm = 1/sum(-Q.diag()%pi);
+  Rcpp::Rcout << "QNorm: " << norm << std::endl;
   Q*=norm*branchLength*rate;
+  Rcpp::Rcout << "QMat: " << Q << std::endl;
   // exponentiate rate matrix and return
   return(arma::expmat(Q));
 }
@@ -93,15 +95,15 @@ NumericMatrix phylogeny::postorderMessagePassing(const NumericVector& data, cons
   // Rcpp::Rcout << "poTab: " << poTab << std::endl;
   // Now compute the probability for the interior nodes
   for(int n=0;n<edges.nrow();n++){
-    // Rcpp::Rcout << "Calculating edge: " << n << std::endl;
+    Rcpp::Rcout << "Calculating edge: " << n << std::endl;
     int parentInd=edges(n,0);
     int childInd=edges(n,1);
     //Compute the rate for edge n
     double r = rate(childInd,rateV);
-    // Rcpp::Rcout << "Rate: " << r << std::endl;
+    Rcpp::Rcout << "Rate: " << r << std::endl;
     // Compute the log rate matrix for edge n 
     arma::mat logTMat = arma::log(rateMatrix(sitePi,r,edgeLength(childInd)));
-    // Rcpp::Rcout << "LogTMat: " << logTMat << std::endl;
+    Rcpp::Rcout << "LogTMat: " << logTMat << std::endl;
     // iterate over all parental alleles
     for(int a=0;a<nAlleles;a++){
       // Iterate over child alleles
@@ -112,7 +114,7 @@ NumericMatrix phylogeny::postorderMessagePassing(const NumericVector& data, cons
       poTab(parentInd,a) = poTab(parentInd,a) + logSumExp(paths);
     }
   }
-  // Rcpp::Rcout << "poTab Final: " << poTab << std::endl;
+  Rcpp::Rcout << "poTab Final: " << poTab << std::endl;
   return(poTab);
 }
 

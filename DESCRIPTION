@@ -30,6 +30,8 @@ Collate:
     'disCharToProb.R'
     'rateModelValidityCheck.R'
     'rateModel-class.R'
+    'fit.R'
+    'getAlleleData.R'
     'getEdgeTable.R'
     'getParams.R'
     'getSiteInfo.R'
@@ -37,6 +39,7 @@ Collate:
     'package.R'
     'rcppModules.R'
     'readPAF.R'
+    'scaledLL.R'
     'setParams.R'
     'siteLL.R'
 VignetteBuilder: knitr

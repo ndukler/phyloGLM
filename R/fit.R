@@ -34,7 +34,7 @@ methods::setMethod("fit", signature(obj = "rateModel"), function(obj,scale=NULL,
   
   ## Set default control options
   if(method %in% c("l-bfgs-b")){
-    cont = list(ndeps=rep(10^-6,length(y)))
+    cont = list(ndeps=rep(10^-6,sum(!obj@fixed)))
   } else {
     cont = nloptr::nl.opts()
   }
@@ -44,21 +44,20 @@ methods::setMethod("fit", signature(obj = "rateModel"), function(obj,scale=NULL,
   } 
   
   if(method=="l-bfgs-b"){
-    optMod=optim(y,fn = epiAllele:::scaledLL,obj=obj,scale=sca,stickParams=TRUE,lower = lb,upper = ub,method="L-BFGS-B",
+    optMod=optim(par = getParams(obj)[which(!obj@fixed)],fn = scaledLL,obj=obj,scale=sca,method="L-BFGS-B",
                control = cont)
   } else if(method == "mlsl"){
-    optMod=nloptr::mlsl(x0=y,fn = epiAllele:::scaledLL,lower = lb,upper = ub,obj=obj,scale=sca,stickParams=TRUE,
+    optMod=nloptr::mlsl(x0=getParams(obj)[which(!obj@fixed)],fn = scaledLL,obj=obj,scale=sca,
                         control = cont)
     counts=optMod$iter
   } else if(method == "stogo"){
-    optMod=nloptr::stogo(x0=y,fn = epiAllele:::scaledLL,lower = lb,upper = ub,obj=obj,scale=sca,stickParams=TRUE,
+    optMod=nloptr::stogo(x0=getParams(obj)[which(!obj@fixed)],fn = scaledLL,obj=obj,scale=sca,
                          control = cont)
     counts=optMod$iter
   } else {
     stop("Invalid optimization method specified")
   }
-  probs=multiStickToProb(optMod$par[(rateEnd+1):length(optMod$par)],width=getAlleleData(obj)@nAlleles-1)
-  setParamValue(obj2,i = 1:length(obj@params),value = c(optMod$par[1:rateEnd],probs))
-  return(with(optMod,list(model=obj2,value=value,counts=counts,convergence=convergence,message=message)))
+  setParams(obj,optMod$par,which(!obj@fixed)-1)
+  return(with(optMod,list(model=obj,value=value,counts=counts,convergence=convergence,message=message)))
 })
 
