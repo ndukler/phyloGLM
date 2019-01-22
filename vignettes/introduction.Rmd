@@ -42,12 +42,13 @@ rateMod=rateModel(data = ad,rateFormula=formula(~cre.class+go.class))
 Now we can fit the model:
 
 ```{r}
-fitted_mod=fit(rateMod)
-getParams(fitted_mod$model)
-# failP=c(1.072339241,0.996833310,0.999776478,-2.463222270,-4.021448349,0.004552635,-6.568507110,-5.444297674,-4.300386918)
-# rateMod@phylogeny$setParams(failP,1:length(failP)-1)
-# siteLL(rateMod,40)
-# zoo=numeric(40); for(i in 1:40) zoo[i]=rateMod@phylogeny$rate(0,rateMod@rateDM[i,,drop=FALSE])
-# zooPi=matrix(nrow=40,ncol=3); for(i in 1:40) zooPi[i,]=rateMod@phylogeny$pi(rateMod@piDM[i,,drop=FALSE])
-# for(i in 1:length(tree$edge.length)) print(rateMod@phylogeny$rateMatrix(zooPi[22,],zoo[22],tree$edge.length[i]))
+fitted_status=fit(rateMod)
 ```
+
+Once fitted we can extract the parameters and their standard errors:
+
+```{r}
+foo=se(rateMod)
+print(foo)
+```
+

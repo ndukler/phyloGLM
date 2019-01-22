@@ -12,7 +12,9 @@ Imports: Rcpp (>= 1.0.0),
          RcppArmadillo,
          data.table,
          ape,
-         methods
+         methods,
+         numDeriv,
+         cowplot
 LinkingTo: Rcpp,
            RcppArmadillo
 RcppModules: paramIndex,
@@ -37,9 +39,12 @@ Collate:
     'getSiteInfo.R'
     'getTree.R'
     'package.R'
+    'plotParams.R'
     'rcppModules.R'
     'readPAF.R'
     'scaledLL.R'
+    'se.R'
     'setParams.R'
+    'show.R'
     'siteLL.R'
 VignetteBuilder: knitr

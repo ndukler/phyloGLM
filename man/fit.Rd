@@ -13,7 +13,7 @@
 \item{control}{See control from \link[stats]{optim} if using l-bfgs-b, otherwise look at \link[nloptr]{nl.opts}}
 }
 \value{
-a list incuding a rateModel object and information about the optimization
+a list incuding information about the optimization, the model object is updated directly (by reference)
 }
 \description{
 Fits rate model object and returns fitted model

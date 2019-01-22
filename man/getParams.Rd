@@ -3,7 +3,7 @@
 \name{getParams}
 \alias{getParams}
 \alias{getParams,rateModel,rateModel-method}
-\title{Get params}
+\title{Plot coefficents}
 \arguments{
 \item{x}{rateModel object}
 }

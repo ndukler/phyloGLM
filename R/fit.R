@@ -10,7 +10,7 @@ methods::setGeneric("fit", function(obj,scale=NULL,method=c("l-bfgs-b","mlsl","s
 #' @param method Optimization method to use ("l-bfgs-b","mlsl","stogo")
 #' @param control See control from \link[stats]{optim} if using l-bfgs-b, otherwise look at \link[nloptr]{nl.opts}
 #' @name fit
-#' @return a list incuding a rateModel object and information about the optimization
+#' @return a list incuding information about the optimization, the model object is updated directly (by reference)
 #' @include rateModel-class.R
 #' @examples
 #' 
@@ -58,6 +58,6 @@ methods::setMethod("fit", signature(obj = "rateModel"), function(obj,scale=NULL,
     stop("Invalid optimization method specified")
   }
   setParams(obj,optMod$par,which(!obj@fixed)-1)
-  return(with(optMod,list(model=obj,value=value,counts=counts,convergence=convergence,message=message)))
+  return(with(optMod,list(value=value,counts=counts,convergence=convergence,message=message)))
 })
 

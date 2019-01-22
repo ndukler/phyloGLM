@@ -1,4 +1,4 @@
-#' Get params
+#' Plot coefficents
 #'
 #' Returns a vector of parameter values
 #' @param x rateModel object
