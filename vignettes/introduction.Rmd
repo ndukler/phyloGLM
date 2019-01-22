@@ -42,25 +42,12 @@ rateMod=rateModel(data = ad,rateFormula=formula(~cre.class+go.class))
 Now we can fit the model:
 
 ```{r}
-# fit(rateMod)
-failP=c(1.072339241,0.996833310,0.999776478,-2.463222270,-4.021448349,0.004552635,-6.568507110,-5.444297674,-4.300386918)
-rateMod@phylogeny$setParams(failP,1:length(failP)-1)
-siteLL(rateMod,40)
-zoo=numeric(40); for(i in 1:40) zoo[i]=rateMod@phylogeny$rate(0,rateMod@rateDM[i,,drop=FALSE])
-zooPi=matrix(nrow=40,ncol=3); for(i in 1:40) zooPi[i,]=rateMod@phylogeny$pi(rateMod@piDM[i,,drop=FALSE])
-for(i in 1:length(tree$edge.length)) print(rateMod@phylogeny$rateMatrix(zooPi[22,],zoo[22],tree$edge.length[i]))
+fitted_mod=fit(rateMod)
+getParams(fitted_mod$model)
+# failP=c(1.072339241,0.996833310,0.999776478,-2.463222270,-4.021448349,0.004552635,-6.568507110,-5.444297674,-4.300386918)
+# rateMod@phylogeny$setParams(failP,1:length(failP)-1)
+# siteLL(rateMod,40)
+# zoo=numeric(40); for(i in 1:40) zoo[i]=rateMod@phylogeny$rate(0,rateMod@rateDM[i,,drop=FALSE])
+# zooPi=matrix(nrow=40,ncol=3); for(i in 1:40) zooPi[i,]=rateMod@phylogeny$pi(rateMod@piDM[i,,drop=FALSE])
+# for(i in 1:length(tree$edge.length)) print(rateMod@phylogeny$rateMatrix(zooPi[22,],zoo[22],tree$edge.length[i]))
 ```
-
-
-```{r}
-tempM=matrix(c(-1.5658e+005,8.3997e+000,1.5657e+005,
-  1.2882e-002,-1.5657e+005,1.5657e+005,
-  1.2882e-002,8.3997e+000,-8.4126e+000),byrow=TRUE,ncol=3,nrow=3)
-expm::expm(tempM)
-## Compute e^A with svd
-eigen(tempM)
-s=svd(tempM)
-s$u%*%exp(diag(s$d))%*%t(s$v)
-data.table::fwrite(as.data.frame(tempM),"../../../../Downloads/fail_matrix.txt",row.names = FALSE,col.names = FALSE)
-```
-

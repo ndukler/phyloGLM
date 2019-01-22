@@ -22,28 +22,27 @@ extern"C" {
                    double wsp[],int* lwsp,int ipiv[],int* iexph,int *ns,int *iflag );
 }
 
-// [[Rcpp::export]]
-arma::mat expokit_dgpadm(Rcpp::NumericMatrix& mat, double t, bool transpose) {
-
+arma::mat expokit_dgpadm(arma::mat& mat, double t, bool transpose) {
+  
   // Check if t <= 0
   if(t <= 0){
     Rcpp::stop("\nSTOP ERROR: expokit_dgpadm() must be provided with t > 0  \n");
   }
   
   // Check that matrix is square
-  if(mat.ncol()!=mat.nrow()){
+  if(!mat.is_square()){
     Rcpp::stop("\nSTOP ERROR: non-square matrix provided to expokit_dgpadm  \n");
   }
   
   // Set ...
   int ideg = 6;
-    
+  
   // Order (numrows/numcols) of the matrix
-  int m = mat.nrow();
-      
+  int m = mat.n_rows;
+  
   // output matrix
   //double res[m*m];
-        
+  
   // Transpose matrix, if required and flatten
   int dim = m*m;
   double H[dim];
@@ -65,25 +64,25 @@ arma::mat expokit_dgpadm(Rcpp::NumericMatrix& mat, double t, bool transpose) {
       }
     }
   }
-          
+  
   // (ldh,m):(input) argument matrix
   int ldh = m;
-            
+  
   // lwsp = length of wsp, the workspace
   // wsp(lwsp):(workspace/output) lwsp .ge. 4*m*m+ideg+1
   int lwsp = 4*m*m+ideg+1;
   double wsp[lwsp];
-              
+  
   // ipiv(m)   : (workspace)
   int ipiv[m];
-                
+  
   // iexph:(output) number such that wsp(iexph) points to exp(tH)
   // i.e., exp(tH) is located at wsp(iexph ... iexph+m*m-1)
   int iexph = 0;
   
   // ns:(output) number of scaling-squaring used
   int ns = 0;
-                    
+  
   // iflag:(output) exit flag
   // 0 - no problem
   // <0 - problem
@@ -106,3 +105,16 @@ arma::mat expokit_dgpadm(Rcpp::NumericMatrix& mat, double t, bool transpose) {
   }
   return(out_mat);
 }
+
+// [[Rcpp::export]]
+arma::mat expokit_dgpadm(Rcpp::NumericMatrix& mat, double t, bool transpose){
+  arma::mat A(mat.nrow(),mat.ncol());
+  for(unsigned int i=0;i<A.n_rows;i++){
+    for(unsigned int j=0;j<A.n_cols;j++){
+      A(i,j)=mat(i,j);
+    }
+  }
+  arma::mat out = expokit_dgpadm(A, t, transpose);
+  return(out);
+}
+
