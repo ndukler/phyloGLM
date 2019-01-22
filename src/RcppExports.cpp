@@ -7,6 +7,19 @@
 
 using namespace Rcpp;
 
+// expokit_dgpadm
+arma::mat expokit_dgpadm(Rcpp::NumericMatrix& mat, double t, bool transpose);
+RcppExport SEXP _phyloGLM_expokit_dgpadm(SEXP matSEXP, SEXP tSEXP, SEXP transposeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix& >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< double >::type t(tSEXP);
+    Rcpp::traits::input_parameter< bool >::type transpose(transposeSEXP);
+    rcpp_result_gen = Rcpp::wrap(expokit_dgpadm(mat, t, transpose));
+    return rcpp_result_gen;
+END_RCPP
+}
 // logSumExp
 double logSumExp(NumericVector x);
 RcppExport SEXP _phyloGLM_logSumExp(SEXP xSEXP) {
@@ -22,6 +35,7 @@ RcppExport SEXP _rcpp_module_boot_paramIndex();
 RcppExport SEXP _rcpp_module_boot_phylogeny();
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_phyloGLM_expokit_dgpadm", (DL_FUNC) &_phyloGLM_expokit_dgpadm, 3},
     {"_phyloGLM_logSumExp", (DL_FUNC) &_phyloGLM_logSumExp, 1},
     {"_rcpp_module_boot_paramIndex", (DL_FUNC) &_rcpp_module_boot_paramIndex, 0},
     {"_rcpp_module_boot_phylogeny", (DL_FUNC) &_rcpp_module_boot_phylogeny, 0},
