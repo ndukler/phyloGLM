@@ -2,12 +2,16 @@
 #'
 #' Simulates data without an error model
 #' @param tr tree
-#' @param covariateTable
-#' @param rateFormula
-#' @param rateParams
-#' @param piFormula
-#' @param piParams
-#' @param lineageTable
+#' @param covariateTable a data.frame where each column is a covariate and each row 
+#' is a site (columns have covariate names)
+#' @param rateFormula a formula object specifying how covariates are combined to compute the rate
+#' @param rateParams a matrix of parameters where the columns correspond to the covariate label and the rows are
+#' the edgeGroup from the lineage table
+#' @param piFormula a formula object specifying how covariates are combined to compute the stationary distribution
+#' @param piParams a matrix of parameters where the columns correspond to the covariate label and the rows are
+#' each seperate alleles (note nAlleles = nrow(piParams)+1)
+#' @param lineageTable a data.frame with three columns, parent, child, and edgeGroup. Can be used to specify different
+#' rate parameters for different edges
 #' @name simulateSites
 #' @return list with the simulated data and the number of alleles
 #' @export
