@@ -16,9 +16,6 @@
 #' @return list with the simulated data and the number of alleles
 #' @export
 
-rateFormula=formula(~x1*x2+0)
-covariateTable=data.frame(x1=sample(c(0,1),size = 1000,replace = T),x2=sample(c(0,1),size = 1000,replace = T))
-
 simulateSites <- function(tr,covariateTable,rateFormula,rateParams=NULL,piFormula=NULL,piParams=NULL,lineageTable=NULL){
   ## **Start parameter tests**
   
