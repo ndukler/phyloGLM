@@ -56,6 +56,14 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   if(!all(all.vars(piFormula) %in% colnames(getSiteInfo(data)))){
     stop("Some of the covariates in the piFormula are not present in the siteInfo of the alleleData object.")
   }
+  ## Warn user if the formula contains an intercept and provide info on how to avoid 
+  if(attr(terms(rateFormula),"intercept")!=0){
+    warning("rateFormula has an intercept term. To prevent this specify formula with +0 at the end.")
+  }
+  ## Warn user if the formula contains an intercept and provide info on how to avoid 
+  if(attr(terms(piFormula),"intercept")!=0){
+    warning("piFormula has an intercept term. To prevent this specify formula with +0 at the end.")
+  }
   ## Checks for lineage table validity
   if(!is.null(lineageTable)){
     if(!is.data.frame(lineageTable)){
