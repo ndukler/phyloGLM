@@ -15,28 +15,36 @@ First create some data and a tree. Pretend that sites are split into two classes
 library(phyloGLM)
 ## Set seed for consistency
 set.seed(123)
-## Simulate random data
+## Set some parameters for the simulation
 species=c("A","B","C","D","E")
-aData=lapply(as.list(species),function(x) matrix(runif(120),ncol=3))
-names(aData)=species
+nAlleles=3
+nSites=5000
 
 ## Create test trees, both one that will fail, and one that will pass
 tree=ape::rtree(n = length(species),tip.label = species)
 
-## Create a data frame with labels
-siteLabels=data.frame(cre.class=rep(c("Enhancer","Promoter"),each=nrow(aData[[1]])/2),
-                      go.class=rep(c("A","B"),times=nrow(aData[[1]])/2))
+## Create a covariate data.frame with labels
+siteLabels=data.frame(cre.class=factor(rep(c("Enhancer","Promoter"),times=c(3/4*nSites,1/4*nSites))),
+                      logXpress = rnorm(n = nSites, mean = 0 , sd = 1))
+## Set the rate parameter formula
+rateFormula = formula(~cre.class+logXpress+0)
+## Set parameter values
+rateParams=matrix(c(-0.1,-0.4,-0.3),nrow=1)
+piParams=matrix(c(0.3,0.1,0,0,-0.1,0.5),nrow=2,ncol=3,byrow = T)
+## Simulate data
+aData=simulateSites(tr=tree,covariateTable = siteLabels,rateFormula = rateFormula, rateParams = rateParams,
+                    piParams = piParams)
 ```
 Now create the allele data object:
 
 ```{r,echo=FALSE}
-ad=alleleData(data=aData,tree=tree,siteInfo = siteLabels)
+ad=alleleData(data=aData$data,tree=tree,siteInfo = siteLabels)
 ```
 
 Now create a rate model specifying that genomic regions should be seperated by both cre.class and go.class.
 
 ```{r}
-rateMod=rateModel(data = ad,rateFormula=formula(~cre.class+go.class))
+rateMod=rateModel(data = ad,rateFormula=rateFormula)
 ```
 
 Now we can fit the model:
@@ -45,10 +53,10 @@ Now we can fit the model:
 fitted_status=fit(rateMod)
 ```
 
-Once fitted we can extract the parameters and their standard errors:
+Once fitted we can extract the parameters and their standard errors and plot them:
 
 ```{r}
-foo=se(rateMod)
-print(foo)
+seTab=se(rateMod)
+plotParams(seTab)
 ```
 
