@@ -55,22 +55,26 @@ simulateSites <- function(tr,covariateTable,rateFormula,rateParams=NULL,piFormul
   }
   
   ## Check that the form of the parameter matricies are correct
-  nFeaturesRate=length(attr(terms(rateFormula),"term.labels")) + attr(terms(rateFormula),"intercept")
-  nFeaturesPi=length(attr(terms(piFormula),"term.labels")) + attr(terms(piFormula),"intercept")
+  nFeaturesRate=ncol(model.matrix(rateFormula,head(covariateTable,1)))
+  rateFeaturesNames=colnames(model.matrix(rateFormula,head(covariateTable,1)))
+  nFeaturesPi=ncol(model.matrix(piFormula,head(covariateTable,1)))
+  piFeaturesNames=colnames(model.matrix(rateFormula,head(covariateTable,1)))
   nEdgeGroup=length(unique(lineageTable$edgeGroup))
   if(is.null(rateParams)){
     rateParams=matrix(1,ncol = nFeaturesPi , nrow = 1)
   } else if (!is.matrix(rateParams) ||!is.numeric(rateParams)){
     stop("rateParams must be a numeric matrix")
   } else if (ncol(rateParams)!=nFeaturesRate){
-    stop(paste0("ncol(rateParams) must equal the number of coefficients in the formula (",nFeaturesRate,")"))
+    stop(paste0("ncol(rateParams) must equal the number of coefficients in the formula (",nFeaturesRate,"):\n",
+                paste(rateFeaturesNames,collapse = ",")))
   } else if(nrow(rateParams) != nEdgeGroup){
     stop("The number of rows in the rateParams matrix must be equal to the number of edgeGroups in the lineageTable")
   }
   if(is.null(piParams)){
     piParams=matrix(1,ncol = nFeaturesPi , nrow = 1)
   } else if (!is.matrix(piParams) ||!is.numeric(piParams) || ncol(piParams)!=nFeaturesPi){
-    stop(paste0("piParams must be a numeric matrix with ncol=number of coefficients in the formula (",nFeaturesPi,")"))
+    stop(paste0("ncol(piParams) must equal the number of coefficients in the formula (",nFeaturesPi,"): \n ",
+                paste(piFeaturesNames,collapse = ",")))
   }
   
   ## **End parameter tests** 
@@ -89,7 +93,7 @@ simulateSites <- function(tr,covariateTable,rateFormula,rateParams=NULL,piFormul
   lineageTable[,edgeGroup:=as.integer(as.factor(edgeGroup))]
   
   ## compute pi for all sites
-  piAll=exp(piFeatureTable %*%  t(piParamsAug))/rowSums(exp(piFeatureTable %*%  t(piParamsAug)))
+  piAll=exp(-piFeatureTable %*%  t(piParamsAug))/rowSums(exp(-piFeatureTable %*%  t(piParamsAug)))
   nAlleles=ncol(piAll)  
   ## Create rate parameter matrix where col = branch parameters and row = coefficients
   branchRateParams=apply(tr$edge, 1, function(x) rateParams[lineageTable[child==x[2]]$edgeGroup,])
@@ -117,6 +121,6 @@ simulateSites <- function(tr,covariateTable,rateFormula,rateParams=NULL,piFormul
                                   root.value = sample(x=1:length(sitePi),size = 1,prob = sitePi))
   }
   rm(piAll,branchRateParams)
-  aData=disCharToProb(simDat,charLevels=1:length(pi))
+  aData=disCharToProb(simDat,charLevels=1:nAlleles)
   return(list(data=aData,nAlleles=nAlleles))
 }
