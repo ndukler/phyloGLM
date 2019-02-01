@@ -38,8 +38,6 @@ arma::vec phylogeny::pi(const Rcpp::NumericVector& piV){
   arma::vec p(nAlleles);
   // Set as e^0
   p(0)=1;
-  // Rcpp::Rcout << "piInitial: " << p << std::endl;
-  // Rcpp::Rcout << "piV: " << piV << std::endl;
   // Compute the numerators of the softmax function 
   for(int i=1; i < nAlleles; i++){
      // Rcpp::Rcout << "Calc pi for allele: " << i << std::endl;
@@ -68,9 +66,7 @@ arma::mat phylogeny::rateMatrix(const arma::vec& pi,double rate, double branchLe
   Q.diag()= -arma::sum(Q,1); 
   // Standardize rate matrix and scale by branch length and rate
   double norm = 1/sum(-Q.diag()%pi);
-  // Rcpp::Rcout << "QNorm: " << norm << std::endl;
   Q*=norm*rate;
-  // Rcpp::Rcout << "QMat: " << Q << std::endl;
   // exponentiate rate matrix and return
   return(expokit_dgpadm(Q,branchLength,FALSE));
 }
@@ -86,25 +82,20 @@ NumericMatrix phylogeny::postorderMessagePassing(const NumericVector& data, cons
   NumericMatrix poTab(nNode,nAlleles);
   // Compute the stationary distribution
   arma::vec sitePi = pi(piV);
-  // Rcpp::Rcout << "pi: " << sitePi << std::endl;
   // Initialize values for the tips of the tree
   for(int n=0;n<nTips;n++){
     for(int a=0;a<nAlleles;a++){
       poTab(n,a)=data((n*nAlleles)+a);
     }
   }
-  // Rcpp::Rcout << "poTab: " << poTab << std::endl;
   // Now compute the probability for the interior nodes
   for(int n=0;n<edges.nrow();n++){
-    // Rcpp::Rcout << "Calculating edge: " << n << std::endl;
     int parentInd=edges(n,0);
     int childInd=edges(n,1);
     //Compute the rate for edge n
     double r = rate(childInd,rateV);
-    // Rcpp::Rcout << "Rate: " << r << std::endl;
     // Compute the log rate matrix for edge n 
     arma::mat logTMat = arma::log(rateMatrix(sitePi,r,edgeLength(childInd)));
-    // Rcpp::Rcout << "LogTMat: " << logTMat << std::endl;
     // iterate over all parental alleles
     for(int a=0;a<nAlleles;a++){
       // Iterate over child alleles
@@ -115,7 +106,6 @@ NumericMatrix phylogeny::postorderMessagePassing(const NumericVector& data, cons
       poTab(parentInd,a) = poTab(parentInd,a) + logSumExp(paths);
     }
   }
-  // Rcpp::Rcout << "poTab Final: " << poTab << std::endl;
   return(poTab);
 }
 
@@ -126,9 +116,6 @@ Rcpp::NumericVector phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcp
                             const Rcpp::NumericMatrix& piX) {
   int sites=data.nrow();
   NumericVector siteLik(sites); // Numeric vector of the for the logProbability of each site
-  // Rcpp::Rcout << "sites: " << sites << std::endl;
-  // Rcpp::Rcout << "nNode: " << nNode << std::endl;
-  // Rcpp::Rcout << "edges: " << edges << std::endl;
   // loop over sites running the post-order message passing algorithm
   for(int i=0;i<sites;i++){
     arma::vec logPi = arma::log(pi(piX(i,_)));
