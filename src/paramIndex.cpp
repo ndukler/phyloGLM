@@ -26,11 +26,13 @@ paramIndex::paramIndex(Rcpp::IntegerVector grp,Rcpp::IntegerVector col, Rcpp::St
     Rcpp::stop("The grp and nm vectors must be the same length");
   }
   Rcpp::IntegerVector ord = order(grp,col);
-  group=clone(grp)[ord];
-  column=clone(col)[ord];
-  name=clone(nm)[ord];
-  idx=seq(start,(start+group.size())-1);
+  group=Rcpp::as<std::vector<int>>(grp[ord]);
+  column=Rcpp::as<std::vector<int>>(col[ord]);
+  name=Rcpp::as<std::vector<std::string>>(nm[ord]);
+  std::vector<int> idx(group.size()); 
+  std::iota(idx.start(),idx.end(),start);
   // Create a matrix lookup to give row for each group/column combo
+  std::vector<vector<int>> lookup(max(grp)+1,std::vector<int>(max(col)+1)); 
   lookup=Rcpp::IntegerMatrix(max(group)+1,max(column)+1);
   for(int i=0; i<group.size();i++){
     lookup(group(i),column(i))=i;

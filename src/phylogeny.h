@@ -23,8 +23,10 @@ private:
   // Functions
   Rcpp::NumericMatrix postorderMessagePassing(const Rcpp::NumericVector& data, const Rcpp::NumericVector& rateX, 
                                                    const Rcpp::NumericVector& piX);
-  void phylogeny::chunkLL(Rcpp::NumericVector& siteLik, const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
+  void chunkLL(Rcpp::NumericVector& siteLik, const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX,
                           const Rcpp::NumericMatrix& piX, int start, int end);
+  void test(std::vector<double>& siteLik,int start, int end);
+    
 
 public:
   // Functions
@@ -33,7 +35,7 @@ public:
   double rate(const int child,const Rcpp::NumericVector& siteX);
   arma::vec pi(const Rcpp::NumericVector& siteX);
   arma::mat rateMatrix(const arma::vec & pi,double rate, double branchLength);
-  Rcpp::NumericVector siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
+  std::vector<double> siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
                                         const Rcpp::NumericMatrix& piX);
   Rcpp::DataFrame getRateIndex();
   Rcpp::DataFrame getPiIndex();

@@ -1,11 +1,11 @@
+// [[Rcpp::depends(RcppArmadillo)]]
+
 #include "phylogeny.h"
 #include "paramIndex.h"
 #include "logSumExp.h"
 #include "expokit.h"
-#include <iostream>
-#include <thread>
+#include <RcppThread.h>
 #include <RcppArmadillo.h>
-// [[Rcpp::depends(RcppArmadillo)]]
 using namespace Rcpp;
 
 phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFrame pDF,
@@ -127,9 +127,17 @@ void phylogeny::chunkLL(Rcpp::NumericVector& siteLik, const Rcpp::NumericMatrix&
       temp(a) = rootMes(a)+logPi(a);
     }
     siteLik(i)=logSumExp(temp);
+  }
 }
 
-Rcpp::NumericVector phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
+void phylogeny::test(std::vector<double>& siteLik, int start, int end){
+  for(int i=start;i<end;i++){
+    siteLik[i]=i;
+  }
+}
+
+
+std::vector<double> phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
                             const Rcpp::NumericMatrix& piX) {
   int sites=data.nrow();
   int nThreads=2;
@@ -138,15 +146,17 @@ Rcpp::NumericVector phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcp
   int start = 0; // each thread does [start..end)
   int end = sites;
    
-  NumericVector siteLik(sites); // Numeric vector of the for the logProbability of each site
+  std::vector<double> siteLik(sites); // Numeric vector of the for the logProbability of each site
   std::vector<std::thread> workers; // vector of worker threads
   // loop over sites running the post-order message passing algorithm
   
-  for(t=0;t<nThreads;t++){
+  for(int t=0;t<nThreads;t++){
     if (t == nThreads-1){ // last thread does extra rows:
       end += extra;
     }
-    workers.push_back( thread(chunkLL, siteLik, data, rateX, piX, start, end) );
+    workers.push_back(std::thread(&phylogeny::test, this, siteLik, 
+                                  start, end));
+    // workers.push_back(std::thread(chunkLL, siteLik, data, rateX, piX, start, end));
     start = end;
     end = start + rows;
   }
@@ -171,7 +181,7 @@ Rcpp::NumericVector phylogeny::getParams(){
   return(params);
 }
 
-void phylogeny::setParams(Rcpp::NumericVector x, Rcpp::IntegerVector index){
+void phylogeny::setParams(const Rcpp::NumericVector x, const Rcpp::IntegerVector index){
   if(x.size()!=index.size()){
     Rcpp::stop("Error when setting parameter vector: vector length mismatch");
   }

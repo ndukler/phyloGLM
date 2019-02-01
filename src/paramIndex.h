@@ -8,13 +8,13 @@ class paramIndex
 {
 private:
   // Variables
-  Rcpp::IntegerVector group;
-  Rcpp::IntegerVector column;
-  Rcpp::StringVector name;
-  Rcpp::IntegerVector idx;
-  Rcpp::IntegerMatrix lookup;
+  std::vector<int> group;
+  std::vector<int> column;
+  std::vector<std::string> name;
+  std::vector<int> idx;
+  std::vector<int> lookup;
   // Functions
-  Rcpp::IntegerVector order(Rcpp::IntegerVector y, Rcpp::IntegerVector z);
+  Rcpp::IntegerVector order(std::vector<int> & y, std::vector<int> & z);
   
 public:
   // Functions
