@@ -2,6 +2,8 @@
 #include "paramIndex.h"
 #include "logSumExp.h"
 #include "expokit.h"
+#include <iostream>
+#include <thread>
 #include <RcppArmadillo.h>
 // [[Rcpp::depends(RcppArmadillo)]]
 using namespace Rcpp;
@@ -112,12 +114,11 @@ NumericMatrix phylogeny::postorderMessagePassing(const NumericVector& data, cons
 /*
  * Log-likelihood functions
  */
-Rcpp::NumericVector phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
-                            const Rcpp::NumericMatrix& piX) {
-  int sites=data.nrow();
-  NumericVector siteLik(sites); // Numeric vector of the for the logProbability of each site
-  // loop over sites running the post-order message passing algorithm
-  for(int i=0;i<sites;i++){
+
+// Function to be called by threads for parallel execution
+void phylogeny::chunkLL(Rcpp::NumericVector& siteLik, const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
+             const Rcpp::NumericMatrix& piX, int start, int end){
+  for(int i=start;i<end;i++){
     arma::vec logPi = arma::log(pi(piX(i,_)));
     // Rcpp::Rcout << "LogPi: " << logPi << std::endl;
     Rcpp::NumericVector rootMes = postorderMessagePassing(data(i,_), rateX(i,_), piX(i,_))(root,_);
@@ -126,9 +127,33 @@ Rcpp::NumericVector phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcp
       temp(a) = rootMes(a)+logPi(a);
     }
     siteLik(i)=logSumExp(temp);
+}
+
+Rcpp::NumericVector phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
+                            const Rcpp::NumericMatrix& piX) {
+  int sites=data.nrow();
+  int nThreads=2;
+  int rows=sites / nThreads; // Number of blocks that parallel loop must be executed over
+  int extra = sites % nThreads; // remaining rows for last thread
+  int start = 0; // each thread does [start..end)
+  int end = sites;
+   
+  NumericVector siteLik(sites); // Numeric vector of the for the logProbability of each site
+  std::vector<std::thread> workers; // vector of worker threads
+  // loop over sites running the post-order message passing algorithm
+  
+  for(t=0;t<nThreads;t++){
+    if (t == nThreads-1){ // last thread does extra rows:
+      end += extra;
+    }
+    workers.push_back( thread(chunkLL, siteLik, data, rateX, piX, start, end) );
+    start = end;
+    end = start + rows;
   }
   return(siteLik);
 }
+
+
 
 /*
  * Getter and setter functions

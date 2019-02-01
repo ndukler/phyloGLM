@@ -23,6 +23,8 @@ private:
   // Functions
   Rcpp::NumericMatrix postorderMessagePassing(const Rcpp::NumericVector& data, const Rcpp::NumericVector& rateX, 
                                                    const Rcpp::NumericVector& piX);
+  void phylogeny::chunkLL(Rcpp::NumericVector& siteLik, const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
+                          const Rcpp::NumericMatrix& piX, int start, int end);
 
 public:
   // Functions
