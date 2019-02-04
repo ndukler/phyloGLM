@@ -12,7 +12,7 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
                      Rcpp::IntegerVector eGroup, Rcpp::List treeInfo) : 
                      rateIndex(rDF[0],rDF[1],rDF[2],0),piIndex(pDF[0],pDF[1],pDF[2],rDF.nrow()){
   params = par;
-  nAlleles = piIndex.getLookup().nrow()+1; // Add one since base "0" allele level has no parameters
+  nAlleles = piIndex.getLookup().size()+1; // Add one since base "0" allele level has no parameters
   edgeGroup = eGroup;
   edges = as<IntegerMatrix>(treeInfo[0]);
   edgeLength = as<NumericVector>(treeInfo[1]);
@@ -27,12 +27,19 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
 
 // Compute rate for a branch with child at a given site
 double phylogeny::rate(const int child,const Rcpp::NumericVector& siteX){
-  Rcpp::NumericVector par = params[rateIndex.getIndex( Rcpp::IntegerVector::create(edgeGroup(child)),
-                                                      (Rcpp::IntegerVector) Rcpp::seq(0,siteX.size()-1),true)];
-  if(siteX.size()!=par.size()){
+  // Initialize range vector 0 .. siteX.size()-1
+  std::vector<int> grp(siteX.size());
+  std::iota(grp.begin(), grp.end(), 0);
+  // Indicies to retrieve from params
+  std::vector<int> parInd = rateIndex.getIndex(std::vector<int>(1,edgeGroup(child)),grp,true);
+  if(siteX.size() != parInd.size()){
     Rcpp::stop("Error in rate calculation: feature/parameter vector length mismatch");
   }
-  return(std::exp(Rcpp::sum(par*siteX)));
+  double r=0;
+  for(unsigned int i=0; i< parInd.size();i++){
+    r+= params[parInd[i]]*siteX(i);  
+  }
+  return(std::exp(r));
 }
 
 // Compute allele stationary distribution for a given site design matrix  
@@ -42,14 +49,20 @@ arma::vec phylogeny::pi(const Rcpp::NumericVector& piV){
   p(0)=1;
   // Compute the numerators of the softmax function 
   for(int i=1; i < nAlleles; i++){
-     // Rcpp::Rcout << "Calc pi for allele: " << i << std::endl;
-     // Get softmax params, need to subtract one from group index since there are no parameters for base
-     // level "0" of allele
-    Rcpp::NumericVector par = params[piIndex.getIndex( Rcpp::IntegerVector::create(i)-1,
-                                                         (Rcpp::IntegerVector) Rcpp::seq(0,piV.size()-1),true)];
-   // Rcpp::Rcout << "piParams: " << par << std::endl;
-    p(i)=std::exp(-1*Rcpp::sum(par*piV));
-   // Rcpp::Rcout << "pi(i): " << p(i) << std::endl;
+    // Rcpp::Rcout << "Calc pi for allele: " << i << std::endl;
+    // Get softmax params, need to subtract one from group index since there are no parameters for base
+    // level "0" of allele
+    std::vector<int> grp(piV.size());
+    std::iota(grp.begin(), grp.end(), 0);
+    // Get parameter indicies
+    std::vector<int> parInd = piIndex.getIndex(std::vector<int>(1,i-1),grp,true);
+    // Rcpp::Rcout << "piParams: " << par << std::endl;
+    int temp=0; // accumulator value for exponenetial
+    for(unsigned int j=0;j<parInd.size();j++){
+      temp+=params[parInd[j]]*piV(j);
+    }
+    p(i)=std::exp(-1*temp);
+    // Rcpp::Rcout << "pi(i): " << p(i) << std::endl;
   }
   // Compute sum of partition function
   double Z = arma::sum(p);
@@ -118,16 +131,16 @@ NumericMatrix phylogeny::postorderMessagePassing(const NumericVector& data, cons
 // Function to be called by threads for parallel execution
 void phylogeny::chunkLL(Rcpp::NumericVector& siteLik, const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
              const Rcpp::NumericMatrix& piX, int start, int end){
-  for(int i=start;i<end;i++){
-    arma::vec logPi = arma::log(pi(piX(i,_)));
-    // Rcpp::Rcout << "LogPi: " << logPi << std::endl;
-    Rcpp::NumericVector rootMes = postorderMessagePassing(data(i,_), rateX(i,_), piX(i,_))(root,_);
-    Rcpp::NumericVector temp(nAlleles); 
-    for(int a = 0; a<nAlleles;a++){
-      temp(a) = rootMes(a)+logPi(a);
-    }
-    siteLik(i)=logSumExp(temp);
-  }
+  // for(int i=start;i<end;i++){
+  //   arma::vec logPi = arma::log(pi(piX(i,_)));
+  //   // Rcpp::Rcout << "LogPi: " << logPi << std::endl;
+  //   Rcpp::NumericVector rootMes = postorderMessagePassing(data(i,_), rateX(i,_), piX(i,_))(root,_);
+  //   Rcpp::NumericVector temp(nAlleles); 
+  //   for(int a = 0; a<nAlleles;a++){
+  //     temp(a) = rootMes(a)+logPi(a);
+  //   }
+  //   siteLik(i)=logSumExp(temp);
+  // }
 }
 
 void phylogeny::test(std::vector<double>& siteLik, int start, int end){
@@ -147,19 +160,19 @@ std::vector<double> phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcp
   int end = sites;
    
   std::vector<double> siteLik(sites); // Numeric vector of the for the logProbability of each site
-  std::vector<std::thread> workers; // vector of worker threads
-  // loop over sites running the post-order message passing algorithm
-  
-  for(int t=0;t<nThreads;t++){
-    if (t == nThreads-1){ // last thread does extra rows:
-      end += extra;
-    }
-    workers.push_back(std::thread(&phylogeny::test, this, siteLik, 
-                                  start, end));
-    // workers.push_back(std::thread(chunkLL, siteLik, data, rateX, piX, start, end));
-    start = end;
-    end = start + rows;
-  }
+  // std::vector<std::thread> workers; // vector of worker threads
+  // // loop over sites running the post-order message passing algorithm
+  // 
+  // for(int t=0;t<nThreads;t++){
+  //   if (t == nThreads-1){ // last thread does extra rows:
+  //     end += extra;
+  //   }
+  //   workers.push_back(std::thread(&phylogeny::test, this, siteLik, 
+  //                                 start, end));
+  //   // workers.push_back(std::thread(chunkLL, siteLik, data, rateX, piX, start, end));
+  //   start = end;
+  //   end = start + rows;
+  // }
   return(siteLik);
 }
 
