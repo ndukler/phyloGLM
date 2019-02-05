@@ -5,3 +5,5 @@ inst/doc
 *.dll
 
 \.RData
+
+*.Rproj

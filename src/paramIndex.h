@@ -19,6 +19,7 @@ private:
 public:
   // Functions
   paramIndex(Rcpp::IntegerVector grp,Rcpp::IntegerVector col, Rcpp::StringVector nm,int start);
+  std::vector<int> getIndex(int a);
   std::vector<int> getIndex(const std::vector<int> grp, const std::vector<int> col,bool expand);
   Rcpp::DataFrame asDF();
   std::vector<std::vector<int>> getLookup();

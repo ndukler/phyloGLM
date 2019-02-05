@@ -18,7 +18,8 @@ Rcpp::IntegerVector paramIndex::order(const Rcpp::IntegerVector y, const Rcpp::I
   return(o);
 }
 
-paramIndex::paramIndex(Rcpp::IntegerVector grp,Rcpp::IntegerVector col, Rcpp::StringVector nm,int start){
+paramIndex::paramIndex(Rcpp::IntegerVector grp,Rcpp::IntegerVector col, Rcpp::StringVector nm,int start):
+  lookup(Rcpp::max(grp)+1,std::vector<int>(Rcpp::max(col)+1,-1)){
   if(grp.size()!=col.size()){
     Rcpp::stop("The grp and col vectors must be the same length");
   }
@@ -29,13 +30,15 @@ paramIndex::paramIndex(Rcpp::IntegerVector grp,Rcpp::IntegerVector col, Rcpp::St
   group=Rcpp::as<std::vector<int>>(grp[ord]);
   column=Rcpp::as<std::vector<int>>(col[ord]);
   name=Rcpp::as<std::vector<std::string>>(nm[ord]);
-  std::vector<int> idx(group.size()); 
+  idx.resize(grp.size());
   std::iota(idx.begin(),idx.end(),start);
-  // Create a matrix lookup to give row for each group/column combo
-  std::vector<std::vector<int>> lookup(max(grp)+1,std::vector<int>(max(col)+1)); 
   for(unsigned int i=0; i<group.size();i++){
     lookup[group[i]][column[i]]=i;
   }
+}
+
+std::vector<int> paramIndex::getIndex(int a){
+  return(idx);
 }
 
 std::vector<int> paramIndex::getIndex(const std::vector<int> grp, const std::vector<int> col,bool expand){
@@ -50,7 +53,11 @@ std::vector<int> paramIndex::getIndex(const std::vector<int> grp, const std::vec
     else{
       out.resize(grp.size());
       for(unsigned int i=0;i<grp.size();i++){
-        out[i]=idx[lookup[ grp[i] ][ col[i] ] ];
+        int lIdx=lookup[ grp[i] ][ col[i] ];
+        if(lIdx==-1){
+          Rcpp::stop("Invalid index query.");    
+        }
+        out[i]=idx[lIdx];
       }
     }
   } 
@@ -59,7 +66,11 @@ std::vector<int> paramIndex::getIndex(const std::vector<int> grp, const std::vec
     int iter=0;
     for(unsigned int i=0;i<grp.size();i++){
       for(unsigned int j=0;j<col.size();j++){
-        out[iter]=idx[lookup[grp[i]][col[j]]];
+        int lIdx=lookup[grp[i]][col[j]];
+        if(lIdx==-1){
+          Rcpp::stop("Invalid index query.");    
+        }
+        out[iter]=idx[lIdx];
         iter++;
       }
     }
@@ -68,7 +79,20 @@ std::vector<int> paramIndex::getIndex(const std::vector<int> grp, const std::vec
 }
 
 Rcpp::DataFrame paramIndex::asDF(){
-  return(Rcpp::DataFrame::create(_["group"]= group, _["column"]= column,_["name"]=name, _["idx"]=idx));
+  Rcpp::IntegerVector tempG(group.size());
+  Rcpp::IntegerVector tempC(group.size());
+  Rcpp::CharacterVector tempN(group.size());
+  Rcpp::IntegerVector tempI(group.size());
+
+  //Rcpp::Rcout << tempG << std::endl;
+  for(unsigned int i=0; i< group.size();i++){
+    tempG(i)=group[i];
+    tempC(i)=column[i];
+    tempN(i)=name[i];
+    tempI(i)=idx[i];
+  }
+  return(Rcpp::DataFrame::create(_["group"]= tempG, _["column"]= tempC,_["name"]=tempN, _["idx"]=tempI));
+  // return(Rcpp::DataFrame::create(_["group"]=Rcpp::IntegerVector(2)));
 }
 
 /*
@@ -91,10 +115,15 @@ std::vector<std::string> paramIndex::getName(){
 }
 
 RCPP_MODULE(paramIndex) {
+  // helping the compiler disambiguate things
+  std::vector<int> (paramIndex::*getIndex_1)(int) = &paramIndex::getIndex;
+  std::vector<int> (paramIndex::*getIndex_2)(std::vector<int>,std::vector<int>,bool) = &paramIndex::getIndex;
+  
   class_<paramIndex>( "paramIndex" )
   .constructor<IntegerVector,IntegerVector,StringVector,int>()
   .method("asDF", &paramIndex::asDF)
-  .method("getIndex", &paramIndex::getIndex)
+  .method( "getIndex" , getIndex_1)  
+  .method( "getIndex" , getIndex_2)
   .method("getLookup", &paramIndex::getLookup)
   .method("getGroup", &paramIndex::getGroup)
   .method("getColumn", &paramIndex::getColumn)
