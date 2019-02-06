@@ -8,20 +8,24 @@ class paramIndex
 {
 private:
   // Variables
-  Rcpp::IntegerVector group;
-  Rcpp::IntegerVector column;
-  Rcpp::StringVector name;
-  Rcpp::IntegerVector idx;
-  Rcpp::IntegerMatrix lookup;
+  std::vector<int> group;
+  std::vector<int> column;
+  std::vector<std::string> name;
+  std::vector<int> idx;
+  std::vector<std::vector<int>> lookup;
   // Functions
-  Rcpp::IntegerVector order(Rcpp::IntegerVector y, Rcpp::IntegerVector z);
+  Rcpp::IntegerVector order(const Rcpp::IntegerVector y, const Rcpp::IntegerVector z);
   
 public:
   // Functions
   paramIndex(Rcpp::IntegerVector grp,Rcpp::IntegerVector col, Rcpp::StringVector nm,int start);
-  Rcpp::IntegerVector getIndex(Rcpp::IntegerVector grp, Rcpp::IntegerVector col,bool expand);
+  std::vector<int> getIndex(int a);
+  std::vector<int> getIndex(const std::vector<int> grp, const std::vector<int> col,bool expand);
   Rcpp::DataFrame asDF();
-  Rcpp::IntegerMatrix getLookup();
+  std::vector<std::vector<int>> getLookup();
+  std::vector<int> getGroup();
+  std::vector<int> getColumn();
+  std::vector<std::string> getName();
 };
 
 #endif

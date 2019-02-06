@@ -1,4 +1,4 @@
-methods::setGeneric("fit", function(obj,scale=NULL,method=c("l-bfgs-b","mlsl","stogo"),control=list()) {
+methods::setGeneric("fit", function(obj,scale=NULL,method=c("l-bfgs-b","mlsl","stogo"),threads=1,control=list()) {
   standardGeneric("fit")
 })
 
@@ -8,6 +8,7 @@ methods::setGeneric("fit", function(obj,scale=NULL,method=c("l-bfgs-b","mlsl","s
 #' @param obj rateModel
 #' @param scale a scale factor to apply to log-likelihood, defaults to -1/nsites
 #' @param method Optimization method to use ("l-bfgs-b","mlsl","stogo")
+#' @param threads number of threads to use
 #' @param control See control from \link[stats]{optim} if using l-bfgs-b, otherwise look at \link[nloptr]{nl.opts}
 #' @name fit
 #' @return a list incuding information about the optimization, the model object is updated directly (by reference)
@@ -15,7 +16,8 @@ methods::setGeneric("fit", function(obj,scale=NULL,method=c("l-bfgs-b","mlsl","s
 #' @examples
 #' 
 #' @export
-methods::setMethod("fit", signature(obj = "rateModel"), function(obj,scale=NULL,method=c("l-bfgs-b","mlsl","stogo"),control=list()) {
+methods::setMethod("fit", signature(obj = "rateModel"), function(obj,scale=NULL,method=c("l-bfgs-b","mlsl","stogo"),
+                                                                 threads=1,control=list()) {
   ## scale defaults to -1/nsites
   if(is.null(scale)){
     sca=-1/nrow(getAlleleData(obj)@data)
@@ -45,14 +47,14 @@ methods::setMethod("fit", signature(obj = "rateModel"), function(obj,scale=NULL,
   
   if(method=="l-bfgs-b"){
     optMod=optim(par = getParams(obj)[which(!obj@fixed)],fn = scaledLL,obj=obj,scale=sca,method="L-BFGS-B",
-               control = cont)
+               threads=threads,control = cont)
   } else if(method == "mlsl"){
     optMod=nloptr::mlsl(x0=getParams(obj)[which(!obj@fixed)],fn = scaledLL,obj=obj,scale=sca,
-                        control = cont)
+                        threads=threads,control = cont)
     counts=optMod$iter
   } else if(method == "stogo"){
     optMod=nloptr::stogo(x0=getParams(obj)[which(!obj@fixed)],fn = scaledLL,obj=obj,scale=sca,
-                         control = cont)
+                         threads=threads,control = cont)
     counts=optMod$iter
   } else {
     stop("Invalid optimization method specified")

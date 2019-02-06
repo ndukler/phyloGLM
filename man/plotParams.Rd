@@ -3,9 +3,10 @@
 \name{plotParams}
 \alias{plotParams}
 \alias{plotParams,rateModel,rateModel-method}
+\alias{plotParams,data.frame,data.frame-method}
 \title{Plot parameter values}
 \arguments{
-\item{obj}{rateModel}
+\item{x}{rateModel object or the data.frame from se(rateModel)}
 }
 \value{
 a data.table with the parameter values and standard errors

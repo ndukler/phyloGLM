@@ -14,7 +14,7 @@ foo=new(phyloGLM:::paramIndex,x,y,name,3)
 temp=data.frame(group=x,column=y,name)
 temp=temp[with(temp,order(group,column)),]
 testthat::test_that("paramIndex sorts correctly",{
-  testthat::expect_equal(foo$asDF()$name,temp$name)
+  testthat::expect_equal(foo$getName(),as.character(temp$name))
 })
 
 ## Test that index starts in correct place
