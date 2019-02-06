@@ -25,7 +25,7 @@ et[,edgeGroup:=c(0,1,2)]
 ## -------------------------------------------------------------------------- ##
 ## construct rateModel 
 testthat::context("rateModel object can be constructed")
-testthat::expect_s4_class(rateMod<-rateModel(data = ad,rateFormula = rateFormula,lineageTable = et),class = "rateModel")
+testthat::expect_s4_class({suppressWarnings(rateMod<-rateModel(data = ad,rateFormula = rateFormula,lineageTable = et))},class = "rateModel")
 
 ## If rate model object was not constructed don't trigger any further tests
 if(exists('rateMod')){
