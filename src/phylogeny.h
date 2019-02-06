@@ -24,8 +24,8 @@ private:
   std::vector<std::vector<double>> postorderMessagePassing(const std::vector<double>& data, 
                                 const std::vector<double>& rateV, const std::vector<double>& piV);
   void chunkLL(std::vector<double>& siteLik, const std::vector<std::vector<double>>& data, 
-                          const std::vector<std::vector<double>>& rateX, const std::vector<std::vector<double>>& piX,
-                          int start, int end);
+               const std::vector<std::vector<double>>& rateX, const std::vector<std::vector<double>>& piX,
+               unsigned int start, unsigned int end);
   void test(std::vector<double>& siteLik,int start, int end);
     
 

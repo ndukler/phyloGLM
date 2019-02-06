@@ -23,8 +23,8 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
   }
   edgeLength = Rcpp::as<std::vector<double>>(as<Rcpp::NumericVector>(treeInfo[1]));
   nTips = as<int>(treeInfo[2]);
-  nNode = edges[0].size()+1;
-  root=edges[edges[0].size()-1][0]; // Get the index of the root node
+  nNode = edges.size()+1;
+  root=edges[edges.size()-1][0]; // Get the index of the root node
 }
 
 /*
@@ -116,7 +116,7 @@ std::vector<std::vector<double>> phylogeny::postorderMessagePassing(const std::v
     int childInd=edges[n][1];
     //Compute the rate for edge n
     double r = rate(childInd,rateV);
-    // Compute the log rate matrix for edge n 
+    // Compute the log rate matrix for edge n
     arma::mat logTMat = arma::log(rateMatrix(sitePi,r,edgeLength[childInd]));
     // iterate over all parental alleles
     for(int a=0;a<nAlleles;a++){
@@ -138,16 +138,16 @@ std::vector<std::vector<double>> phylogeny::postorderMessagePassing(const std::v
 // Function to be called by threads for parallel execution
 void phylogeny::chunkLL(std::vector<double>& siteLik, const std::vector<std::vector<double>>& data, 
                         const std::vector<std::vector<double>>& rateX, const std::vector<std::vector<double>>& piX,
-                        int start, int end){
+                        unsigned int start, unsigned int end){
   for(unsigned int i=start;i<end;i++){
     arma::vec logPi = arma::log(pi(piX[i]));
     // Rcpp::Rcout << "LogPi: " << logPi << std::endl;
     std::vector<double> rootMes = postorderMessagePassing(data[i], rateX[i], piX[i])[root];
-    std::vector<double> temp(nAlleles);
-    for(unsigned int a = 0; a<nAlleles;a++){
-      temp[a] = rootMes[a]+logPi[a];
-    }
-    siteLik[i]=logSumExp(temp);
+    // std::vector<double> temp(nAlleles);
+    // for(unsigned int a = 0; a<nAlleles;a++){
+    // temp[a] = rootMes[a]+logPi[a];
+    // }
+    // siteLik[i]=logSumExp(temp);
   }
 }
 
@@ -160,26 +160,47 @@ void phylogeny::test(std::vector<double>& siteLik, int start, int end){
 
 std::vector<double> phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
                             const Rcpp::NumericMatrix& piX) {
-  int sites=data.nrow();
-  int nThreads=2;
-  int rows=sites / nThreads; // Number of blocks that parallel loop must be executed over
-  int extra = sites % nThreads; // remaining rows for last thread
-  int start = 0; // each thread does [start..end)
-  int end = sites;
+  // Math for setting up block size to pass to threads
+  unsigned int sites=data.nrow();
+  unsigned int nThreads=2;
+  unsigned int rows=sites / nThreads; // Number of blocks that parallel loop must be executed over
+  unsigned int extra = sites % nThreads; // remaining rows for last thread
+  unsigned int start = 0; // each thread does [start..end)
+  unsigned int end = rows;
+  
+  // Copy R data structures to stl formats for thread safe passing
+  std::vector<std::vector<double>> dataS(sites,std::vector<double>(data.ncol()));
+  std::vector<std::vector<double>> rateXS(sites,std::vector<double>(rateX.ncol()));
+  std::vector<std::vector<double>> piXS(sites,std::vector<double>(piX.ncol()));
+  for(unsigned int i=0; i<sites;i++){
+    for(int j=0;j<data.ncol();j++){
+      dataS[i][j]=data(i,j);
+    }
+    for(int j=0;j<rateX.ncol();j++){
+      rateXS[i][j]=rateX(i,j);
+    }
+    for(int j=0;j<piX.ncol();j++){
+      piXS[i][j]=piX(i,j);
+    }
+  }
    
   std::vector<double> siteLik(sites); // Numeric vector of the for the logProbability of each site
   std::vector<std::thread> workers; // vector of worker threads
   // loop over sites running the post-order message passing algorithm
-
-  for(int t=0;t<nThreads;t++){
+  for(unsigned int t=0;t<nThreads;t++){
     if (t == nThreads-1){ // last thread does extra rows:
       end += extra;
     }
-    workers.push_back(std::thread(&phylogeny::test, this, siteLik,
-                                  start, end));
-    // workers.push_back(std::thread(chunkLL, siteLik, data, rateX, piX, start, end));
+    // workers.push_back(std::thread(&phylogeny::test, this, std::ref(siteLik),start, end));
+    // chunkLL(std::ref(siteLik), std::ref(dataS), std::ref(rateXS), std::ref(piXS),start, end);
+    workers.push_back(std::thread(&phylogeny::chunkLL, this, std::ref(siteLik), std::ref(dataS),
+                                  std::ref(rateXS), std::ref(piXS),start, end));
     start = end;
     end = start + rows;
+  }
+  // Wait for all threads to finish
+  for (auto& w : workers) {
+    w.join();
   }
   return(siteLik);
 }
