@@ -9,22 +9,23 @@ class phylogeny
 {
 private:
   // Variables
-  Rcpp::NumericVector params; // Vector holding all parameters
+  std::vector<double> params; // Vector holding all parameters
   paramIndex rateIndex; // Parameter index object for rate parameters
   paramIndex piIndex; // Parameter index object for allelic stationary distribution parameters
-  Rcpp::IntegerVector edgeGroup; // Vector that holds group number for each branch, indexed by id# of child
-  Rcpp::IntegerMatrix edges; // Matrix of edges with columns parent,child
-  Rcpp::NumericVector edgeLength; // Length of edges, indexed by the id# of the child
+  std::vector<int> edgeGroup; // Vector that holds group number for each branch, indexed by id# of child
+  std::vector<std::vector<int>> edges; // Matrix of edges with columns parent,child
+  std::vector<double> edgeLength; // Length of edges, indexed by the id# of the child
   int nAlleles; // Number of alleles
   int nTips; // Number of tips on the tree
   int nNode; // Number of nodes on the tree
   int root; // Index of the root node
   
   // Functions
-  Rcpp::NumericMatrix postorderMessagePassing(const Rcpp::NumericVector& data, const Rcpp::NumericVector& rateX, 
-                                                   const Rcpp::NumericVector& piX);
-  void chunkLL(Rcpp::NumericVector& siteLik, const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX,
-                          const Rcpp::NumericMatrix& piX, int start, int end);
+  std::vector<std::vector<double>> postorderMessagePassing(const std::vector<double>& data, 
+                                const std::vector<double>& rateV, const std::vector<double>& piV);
+  void chunkLL(std::vector<double>& siteLik, const std::vector<std::vector<double>>& data, 
+                          const std::vector<std::vector<double>>& rateX, const std::vector<std::vector<double>>& piX,
+                          int start, int end);
   void test(std::vector<double>& siteLik,int start, int end);
     
 
@@ -32,14 +33,14 @@ public:
   // Functions
   phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFrame pDF,
             Rcpp::IntegerVector eGroup,Rcpp::List treeInfo);
-  double rate(const int child,const Rcpp::NumericVector& siteX);
-  arma::vec pi(const Rcpp::NumericVector& siteX);
+  double rate(const int child,const std::vector<double>& siteX);
+  arma::vec pi(const std::vector<double>& piV);
   arma::mat rateMatrix(const arma::vec & pi,double rate, double branchLength);
   std::vector<double> siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
                                         const Rcpp::NumericMatrix& piX);
   Rcpp::DataFrame getRateIndex();
   Rcpp::DataFrame getPiIndex();
-  Rcpp::NumericVector getParams();
+  std::vector<double> getParams();
   void setParams(Rcpp::NumericVector x, Rcpp::IntegerVector index);
 };
 
