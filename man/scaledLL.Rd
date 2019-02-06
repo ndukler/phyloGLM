@@ -9,6 +9,8 @@
 \item{obj}{rateModel object}
 
 \item{scale}{value to scale log-likelihood by (default=1)}
+
+\item{threads}{number of threads to use}
 }
 \value{
 scaled log-likelihood
