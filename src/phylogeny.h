@@ -35,9 +35,9 @@ public:
             Rcpp::IntegerVector eGroup,Rcpp::List treeInfo);
   double rate(const int child,const std::vector<double>& siteX);
   arma::vec pi(const std::vector<double>& piV);
-  arma::mat rateMatrix(const arma::vec & pi,double rate, double branchLength);
+  arma::mat rateMatrix(const arma::vec & pi,const double rate, const double branchLength);
   std::vector<double> siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
-                                        const Rcpp::NumericMatrix& piX);
+                                        const Rcpp::NumericMatrix& piX, const unsigned int threads);
   Rcpp::DataFrame getRateIndex();
   Rcpp::DataFrame getPiIndex();
   std::vector<double> getParams();

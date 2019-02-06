@@ -22,7 +22,7 @@ extern"C" {
                    double wsp[],int* lwsp,int ipiv[],int* iexph,int *ns,int *iflag );
 }
 
-arma::mat expokit_dgpadm(arma::mat& mat, double t, bool transpose) {
+arma::mat expokit_dgpadm(const arma::mat& mat, double t, const bool transpose) {
   
   // Check if t <= 0
   if(t <= 0){
@@ -91,9 +91,9 @@ arma::mat expokit_dgpadm(arma::mat& mat, double t, bool transpose) {
   //Run the function:
   wrapdgpadm_(&ideg, &m, &t, H, &ldh, wsp, &lwsp, ipiv, &iexph, &ns, &iflag);
   // Put results back in a matrix
-  Rcpp::NumericVector temp(lwsp);
+  std::vector<double> temp(lwsp);
   for(int i=0;i<lwsp;i++){
-    temp(i)=wsp[i];
+    temp[i]=wsp[i];
   }
   arma::mat out_mat(m,m);
   int iter= iexph-1;

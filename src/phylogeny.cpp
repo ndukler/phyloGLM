@@ -6,7 +6,10 @@
 #include "expokit.h"
 #include <RcppThread.h>
 #include <RcppArmadillo.h>
+#include <mutex>
 using namespace Rcpp;
+
+// std::mutex mu;
 
 phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFrame pDF,
                      Rcpp::IntegerVector eGroup, Rcpp::List treeInfo) : 
@@ -77,7 +80,7 @@ arma::vec phylogeny::pi(const std::vector<double>& piV){
   return(p/Z);
 }
 
-arma::mat phylogeny::rateMatrix(const arma::vec& pi,double rate, double branchLength) {
+arma::mat phylogeny::rateMatrix(const arma::vec& pi,const double rate, const double branchLength) {
   // initalize temp matrix with all ones
   arma::mat temp(nAlleles,nAlleles,arma::fill::ones);
   // Set diagonal elements to zero
@@ -90,6 +93,7 @@ arma::mat phylogeny::rateMatrix(const arma::vec& pi,double rate, double branchLe
   double norm = 1/sum(-Q.diag()%pi);
   Q*=norm*rate;
   // exponentiate rate matrix and return
+  // return(Q);
   return(expokit_dgpadm(Q,branchLength,FALSE));
 }
 
@@ -117,13 +121,14 @@ std::vector<std::vector<double>> phylogeny::postorderMessagePassing(const std::v
     //Compute the rate for edge n
     double r = rate(childInd,rateV);
     // Compute the log rate matrix for edge n
+    
     arma::mat logTMat = arma::log(rateMatrix(sitePi,r,edgeLength[childInd]));
-    // iterate over all parental alleles
+    // // iterate over all parental alleles
     for(int a=0;a<nAlleles;a++){
       // Iterate over child alleles
-      Rcpp::NumericVector paths(nAlleles);
+      std::vector<double> paths(nAlleles);
       for(int c = 0; c < nAlleles; c++){
-        paths(c)=poTab[childInd][c] + logTMat(a,c);
+        paths[c]=poTab[childInd][c] + logTMat(a,c);
       }
       poTab[parentInd][a] = poTab[parentInd][a] + logSumExp(paths);
     }
@@ -143,11 +148,11 @@ void phylogeny::chunkLL(std::vector<double>& siteLik, const std::vector<std::vec
     arma::vec logPi = arma::log(pi(piX[i]));
     // Rcpp::Rcout << "LogPi: " << logPi << std::endl;
     std::vector<double> rootMes = postorderMessagePassing(data[i], rateX[i], piX[i])[root];
-    // std::vector<double> temp(nAlleles);
-    // for(unsigned int a = 0; a<nAlleles;a++){
-    // temp[a] = rootMes[a]+logPi[a];
-    // }
-    // siteLik[i]=logSumExp(temp);
+    std::vector<double> temp(nAlleles);
+    for(unsigned int a = 0; a<nAlleles;a++){
+      temp[a] = rootMes[a]+logPi[a];
+    }
+    siteLik[i]=logSumExp(temp);
   }
 }
 
@@ -159,12 +164,11 @@ void phylogeny::test(std::vector<double>& siteLik, int start, int end){
 
 
 std::vector<double> phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
-                            const Rcpp::NumericMatrix& piX) {
+                            const Rcpp::NumericMatrix& piX,const unsigned int threads) {
   // Math for setting up block size to pass to threads
   unsigned int sites=data.nrow();
-  unsigned int nThreads=2;
-  unsigned int rows=sites / nThreads; // Number of blocks that parallel loop must be executed over
-  unsigned int extra = sites % nThreads; // remaining rows for last thread
+  unsigned int rows=sites / threads; // Number of blocks that parallel loop must be executed over
+  unsigned int extra = sites % threads; // remaining rows for last thread
   unsigned int start = 0; // each thread does [start..end)
   unsigned int end = rows;
   
@@ -187,8 +191,8 @@ std::vector<double> phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcp
   std::vector<double> siteLik(sites); // Numeric vector of the for the logProbability of each site
   std::vector<std::thread> workers; // vector of worker threads
   // loop over sites running the post-order message passing algorithm
-  for(unsigned int t=0;t<nThreads;t++){
-    if (t == nThreads-1){ // last thread does extra rows:
+  for(unsigned int t=0;t<threads;t++){
+    if (t == threads-1){ // last thread does extra rows:
       end += extra;
     }
     // workers.push_back(std::thread(&phylogeny::test, this, std::ref(siteLik),start, end));
