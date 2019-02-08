@@ -14,11 +14,9 @@ Imports: Rcpp (>= 1.0.0),
          ape,
          methods,
          numDeriv,
-         cowplot,
-         RcppThread
+         cowplot
 LinkingTo: Rcpp,
-           RcppArmadillo,
-           RcppThread
+           RcppArmadillo
 RcppModules: paramIndex,
              phylogeny
 Suggests: 
