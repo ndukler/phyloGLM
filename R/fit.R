@@ -47,19 +47,23 @@ methods::setMethod("fit", signature(obj = "rateModel"), function(obj,scale=NULL,
   
   if(method=="l-bfgs-b"){
     optMod=optim(par = getParams(obj)[which(!obj@fixed)],fn = scaledLL,obj=obj,scale=sca,method="L-BFGS-B",
-               threads=threads,control = cont)
+               threads=threads,control = cont,hessian = TRUE)
   } else if(method == "mlsl"){
+    stop("Unimplemented optimization method specified")
     optMod=nloptr::mlsl(x0=getParams(obj)[which(!obj@fixed)],fn = scaledLL,obj=obj,scale=sca,
                         threads=threads,control = cont)
+    optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,obj=obj,scale=1)
     counts=optMod$iter
   } else if(method == "stogo"){
+    stop("Unimplemented optimization method specified")
     optMod=nloptr::stogo(x0=getParams(obj)[which(!obj@fixed)],fn = scaledLL,obj=obj,scale=sca,
-                         threads=threads,control = cont)
+                         threads=threads)
+    optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,obj=obj,scale=1)
     counts=optMod$iter
   } else {
     stop("Invalid optimization method specified")
   }
   setParams(obj,optMod$par,which(!obj@fixed)-1)
-  return(with(optMod,list(value=value,counts=counts,convergence=convergence,message=message)))
+  return(with(optMod,list(value=value,counts=counts,convergence=convergence,message=message,par=optMod$hessian=hessian)))
 })
 
