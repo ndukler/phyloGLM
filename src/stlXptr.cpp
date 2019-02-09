@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include "stlXptr.h"
 using namespace Rcpp;
 
 //' matrixToStlPointer
@@ -25,10 +26,16 @@ Rcpp::XPtr<std::vector<std::vector<double>>> matrixToStlXptr(Rcpp::NumericMatrix
 
 //' @export
 // [[Rcpp::export(rng = false)]]
-std::vector<std::vector<double>> testPtrUpdate(SEXP xpsexp){
+Rcpp::NumericMatrix stlMatrixSubset(SEXP xpsexp, Rcpp::IntegerVector row, Rcpp::IntegerVector col){
   // Initialze stl vector
   XPtr<std::vector<std::vector<double>>> p(xpsexp);
   std::vector<std::vector<double>> x = *p;
-  x[0][0]=1;
-  return(x);
+  // Initialize Rcpp::NumericMatrix to return to
+  Rcpp::NumericMatrix out(row.size(),col.size());
+  for(int i=0;i<row.size();i++){
+    for(int j=0;j<col.size();j++){
+      out(i,j)=x.at(row(i)).at(col(j));
+    }
+  }
+  return(out);
 }

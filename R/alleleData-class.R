@@ -8,9 +8,10 @@
 #' @name alleleData-class
 #' @rdname alleleData-class
 #' @include alleleDataValidityCheck.R
+#' @include stlMatrix-class.R
 #' @importClassesFrom data.table data.table
 #' @exportClass alleleData
-methods::setClass("alleleData", slots=c(data = "externalptr", tree = "ANY", siteInfo="data.table",nAlleles="numeric",nSpecies="numeric",nSites="numeric"),
+methods::setClass("alleleData", slots=c(data = "stlMatrix", tree = "ANY", siteInfo="data.table",nAlleles="numeric",nSpecies="numeric",nSites="numeric"),
                   validity = alleleDataValidityCheck)
 
 #' alleleData
@@ -96,6 +97,6 @@ alleleData <- function(data,tree,siteInfo=NULL,logProb = FALSE){
   nSites=nrow(dataMatrix)
 
   ## Build object
-  methods::new("alleleData",data=matrixToStlXptr(dataMatrix),tree=tree,siteInfo=data.table::as.data.table(siteInfo),
+  methods::new("alleleData",data=stlMatrix(dataMatrix),tree=tree,siteInfo=data.table::as.data.table(siteInfo),
                nSpecies=nSpecies,nAlleles=nAlleles,nSites=nSites)
 }

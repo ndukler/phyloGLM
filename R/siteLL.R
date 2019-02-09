@@ -20,7 +20,7 @@ methods::setMethod("siteLL", signature(obj = "rateModel"), function(obj,threads=
   # } else if (any(sites==0)){
   #   stop("sites is 1-indexed (at least for now)")
   # }
-  return(obj@phylogeny$siteLL(obj@alleleData$alleleData@data,
-                              obj@rateDM,
-                              obj@piDM,threads))
+  return(obj@phylogeny$siteLL(obj@alleleData$alleleData@data@x,
+                              obj@rateDM@x,
+                              obj@piDM@x,threads))
 })

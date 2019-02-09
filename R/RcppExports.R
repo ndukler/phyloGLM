@@ -34,7 +34,7 @@ matrixToStlXptr <- function(x) {
 }
 
 #' @export
-testPtrUpdate <- function(xpsexp) {
-    .Call(`_phyloGLM_testPtrUpdate`, xpsexp)
+stlMatrixSubset <- function(xpsexp, row, col) {
+    .Call(`_phyloGLM_stlMatrixSubset`, xpsexp, row, col)
 }
 
