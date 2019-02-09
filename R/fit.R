@@ -20,7 +20,7 @@ methods::setMethod("fit", signature(obj = "rateModel"), function(obj,scale=NULL,
                                                                  threads=1,control=list()) {
   ## scale defaults to -1/nsites
   if(is.null(scale)){
-    sca=-1/nrow(getAlleleData(obj)@data)
+    sca=-1/getAlleleData(obj)@data@nrow
   }
   ## Check method and set defaults
   if(length(method)>1){
