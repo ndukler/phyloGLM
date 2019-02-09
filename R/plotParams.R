@@ -15,7 +15,7 @@ methods::setGeneric("plotParams", function(x) {
 #' @aliases plotParams,rateModel,rateModel-method 
 methods::setMethod("plotParams", signature(x = "rateModel"), function(x) {
   ## Get parameter values and standard errors
-  seTab=se(obj)
+  seTab=se(x)
   ## Create bar plot for parameters
   gAll <- plotParams(seTab) 
   return(gAll)
