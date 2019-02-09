@@ -22,3 +22,19 @@ logSumExp <- function(x) {
     .Call(`_phyloGLM_logSumExp`, x)
 }
 
+#' matrixToStlPointer
+#' 
+#' This function converts a matrix to a 2D double stl vector and returns a XPtr to a 
+#' pointer to the vector
+#'
+#' @param x A numeric matrix
+#' @export
+matrixToStlXptr <- function(x) {
+    .Call(`_phyloGLM_matrixToStlXptr`, x)
+}
+
+#' @export
+testPtrUpdate <- function(xpsexp) {
+    .Call(`_phyloGLM_testPtrUpdate`, xpsexp)
+}
+

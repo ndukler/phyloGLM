@@ -4,7 +4,7 @@
 #include "paramIndex.h"
 #include "logSumExp.h"
 #include "expokit.h"
-#include <RcppThread.h>
+#include <thread>
 #include <RcppArmadillo.h>
 #include <mutex>
 using namespace Rcpp;

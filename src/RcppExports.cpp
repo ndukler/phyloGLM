@@ -30,6 +30,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// matrixToStlXptr
+Rcpp::XPtr<std::vector<std::vector<double>>> matrixToStlXptr(Rcpp::NumericMatrix x);
+RcppExport SEXP _phyloGLM_matrixToStlXptr(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(matrixToStlXptr(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// testPtrUpdate
+std::vector<std::vector<double>> testPtrUpdate(SEXP xpsexp);
+RcppExport SEXP _phyloGLM_testPtrUpdate(SEXP xpsexpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xpsexp(xpsexpSEXP);
+    rcpp_result_gen = Rcpp::wrap(testPtrUpdate(xpsexp));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 RcppExport SEXP _rcpp_module_boot_paramIndex();
 RcppExport SEXP _rcpp_module_boot_phylogeny();
@@ -37,6 +57,8 @@ RcppExport SEXP _rcpp_module_boot_phylogeny();
 static const R_CallMethodDef CallEntries[] = {
     {"_phyloGLM_expokit_dgpadm", (DL_FUNC) &_phyloGLM_expokit_dgpadm, 3},
     {"_phyloGLM_logSumExp", (DL_FUNC) &_phyloGLM_logSumExp, 1},
+    {"_phyloGLM_matrixToStlXptr", (DL_FUNC) &_phyloGLM_matrixToStlXptr, 1},
+    {"_phyloGLM_testPtrUpdate", (DL_FUNC) &_phyloGLM_testPtrUpdate, 1},
     {"_rcpp_module_boot_paramIndex", (DL_FUNC) &_rcpp_module_boot_paramIndex, 0},
     {"_rcpp_module_boot_phylogeny", (DL_FUNC) &_rcpp_module_boot_phylogeny, 0},
     {NULL, NULL, 0}
