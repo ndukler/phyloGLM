@@ -80,7 +80,8 @@ if(exists('rateMod')){
                       testthat::expect_equal(log(as.numeric(rateMod@phylogeny$rateMatrix(piProb,r2,getTree(ad)$edge.length[3]))),
                                              as.numeric(qBaseNormE3)))
   
-  ## Compute log-likelihood
+  testthat::context("rateModel logLikelihood calculation")
+    ## Compute log-likelihood
   pl1=exp(qBaseNormE1) %*% matrix(c(1,0),ncol = 1)
   pl2=exp(qBaseNormE2) %*% matrix(c(0,1),ncol=1)  
   pl3=exp(qBaseNormE3) %*% matrix(c(0,1),ncol=1)  
