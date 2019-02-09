@@ -10,7 +10,7 @@
 #' @include alleleDataValidityCheck.R
 #' @importClassesFrom data.table data.table
 #' @exportClass alleleData
-methods::setClass("alleleData", slots=c(data = "matrix", tree = "ANY", siteInfo="data.table",nAlleles="numeric",nSpecies="numeric",nSites="numeric"),
+methods::setClass("alleleData", slots=c(data = "externalptr", tree = "ANY", siteInfo="data.table",nAlleles="numeric",nSpecies="numeric",nSites="numeric"),
                   validity = alleleDataValidityCheck)
 
 #' alleleData
@@ -68,8 +68,34 @@ alleleData <- function(data,tree,siteInfo=NULL,logProb = FALSE){
   if(!logProb){
     dataMatrix=log(dataMatrix)
   }
+  
+  ##
+  ## Do data validity checks
+  ##
+  
+  ## Check that all numbers are valid probabilities
+  if(any(dataMatrix > 0) || any(is.na(dataMatrix)) || any(is.nan(dataMatrix))){
+    stop("Non-valid log-proababilities in alleleData@data. All values must be in [-Inf,0].")
+  }
+  ## Check that there are the same number of alleles in each species
+  if(table(unique(table(gsub("\\.\\d+$", "",x=colnames(dataMatrix)))))!=1){
+    stop("Differing numbers of alleles between species")
+  }
+  ## Check that the labels at the tips of the tree match the transformed names in the matrix
+  if(any(unique(gsub("\\.\\d+$", "",x=colnames(dataMatrix))) != tree$tip.label)){
+    stop("Species names do not match in the tree and the data matrix") 
+  }
+  ## Check that there are the expected number of columns in the data matrix
+  if(ncol(dataMatrix)!=(nAlleles*nSpecies)){
+    stop("The number of columns in the data matrix is not the expected nSpecies*nAlleles") 
+  }
+  
+  ## End checks
+  
   ## Get nSites
   nSites=nrow(dataMatrix)
-  methods::new("alleleData",data=dataMatrix,tree=tree,siteInfo=data.table::as.data.table(siteInfo),nSpecies=nSpecies,
-               nAlleles=nAlleles,nSites=nSites)
+
+  ## Build object
+  methods::new("alleleData",data=matrixToStlXptr(dataMatrix),tree=tree,siteInfo=data.table::as.data.table(siteInfo),
+               nSpecies=nSpecies,nAlleles=nAlleles,nSites=nSites)
 }
