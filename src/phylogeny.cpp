@@ -163,23 +163,23 @@ void phylogeny::test(std::vector<double>& siteLik, int start, int end){
 }
 
 
-std::vector<double> phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcpp::NumericMatrix& rateX, 
+std::vector<double> phylogeny::siteLL(SEXP dataPtr, const Rcpp::NumericMatrix& rateX, 
                             const Rcpp::NumericMatrix& piX,const unsigned int threads) {
+  // Type and dereference external pointers
+  XPtr<std::vector<std::vector<double>>> p(dataPtr);
+  std::vector<std::vector<double>> data = *p;
+  
   // Math for setting up block size to pass to threads
-  unsigned int sites=data.nrow();
+  unsigned int sites=data.size();
   unsigned int rows=sites / threads; // Number of blocks that parallel loop must be executed over
   unsigned int extra = sites % threads; // remaining rows for last thread
   unsigned int start = 0; // each thread does [start..end)
   unsigned int end = rows;
   
   // Copy R data structures to stl formats for thread safe passing
-  std::vector<std::vector<double>> dataS(sites,std::vector<double>(data.ncol()));
   std::vector<std::vector<double>> rateXS(sites,std::vector<double>(rateX.ncol()));
   std::vector<std::vector<double>> piXS(sites,std::vector<double>(piX.ncol()));
   for(unsigned int i=0; i<sites;i++){
-    for(int j=0;j<data.ncol();j++){
-      dataS[i][j]=data(i,j);
-    }
     for(int j=0;j<rateX.ncol();j++){
       rateXS[i][j]=rateX(i,j);
     }
@@ -197,7 +197,7 @@ std::vector<double> phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcp
     }
     // workers.push_back(std::thread(&phylogeny::test, this, std::ref(siteLik),start, end));
     // chunkLL(std::ref(siteLik), std::ref(dataS), std::ref(rateXS), std::ref(piXS),start, end);
-    workers.push_back(std::thread(&phylogeny::chunkLL, this, std::ref(siteLik), std::ref(dataS),
+    workers.push_back(std::thread(&phylogeny::chunkLL, this, std::ref(siteLik), std::ref(data),
                                   std::ref(rateXS), std::ref(piXS),start, end));
     start = end;
     end = start + rows;
@@ -208,7 +208,6 @@ std::vector<double> phylogeny::siteLL(const Rcpp::NumericMatrix& data, const Rcp
   }
   return(siteLik);
 }
-
 
 
 /*
