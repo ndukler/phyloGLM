@@ -6,8 +6,6 @@
 \title{Compute sitewise log-likelihoods}
 \arguments{
 \item{x}{rateModel object}
-
-\item{sites}{integer vectore of sites that log-likelihoods should be computed for (note: 1-indexed)}
 }
 \value{
 vector of parameter values

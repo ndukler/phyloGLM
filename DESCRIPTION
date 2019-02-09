@@ -27,6 +27,7 @@ Encoding: UTF-8
 RoxygenNote: 6.1.1
 Collate: 
     'RcppExports.R'
+    'stlMatrix-class.R'
     'alleleDataValidityCheck.R'
     'alleleData-class.R'
     'disCharToProb.R'
