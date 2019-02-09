@@ -17,8 +17,8 @@
 #' @importClassesFrom data.table data.table
 #' @exportClass rateModel
 methods::setClass("rateModel", slots=c(alleleData = "environment",edgeGroups="data.table",
-                                       rateFormula="formula",piFormula="formula",rateDM="matrix",
-                                       piDM="matrix",phylogeny="ANY",fixed="logical"),
+                                       rateFormula="formula",piFormula="formula",rateDM="externalptr",
+                                       piDM="externalptr",phylogeny="ANY",fixed="logical"),
                   validity = rateModelValidityCheck)
 
 #' rateModel
@@ -120,7 +120,7 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   
   ## ** Object construction ** ##
   methods::new("rateModel",alleleData=adEnviron,edgeGroups=lineageTable,rateFormula=rateFormula,
-               piFormula=piFormula,rateDM=rateDM,piDM=piDM,
+               piFormula=piFormula,rateDM=matrixToStlXptr(rateDM),piDM=matrixToStlXptr(piDM),
                phylogeny=new(phyloGLM:::phylogeny,params,data.frame(rateP$group,
                     rateP$column,colnames(rateDM)[rateP$column+1]),
                     data.frame(piP$group,piP$col,colnames(piDM)[piP$column+1]),eG,treeInfo),

@@ -149,7 +149,7 @@ void phylogeny::chunkLL(std::vector<double>& siteLik, const std::vector<std::vec
     // Rcpp::Rcout << "LogPi: " << logPi << std::endl;
     std::vector<double> rootMes = postorderMessagePassing(data[i], rateX[i], piX[i])[root];
     std::vector<double> temp(nAlleles);
-    for(unsigned int a = 0; a<nAlleles;a++){
+    for(int a = 0; a<nAlleles;a++){
       temp[a] = rootMes[a]+logPi[a];
     }
     siteLik[i]=logSumExp(temp);
@@ -163,11 +163,14 @@ void phylogeny::test(std::vector<double>& siteLik, int start, int end){
 }
 
 
-std::vector<double> phylogeny::siteLL(SEXP dataPtr, const Rcpp::NumericMatrix& rateX, 
-                            const Rcpp::NumericMatrix& piX,const unsigned int threads) {
+std::vector<double> phylogeny::siteLL(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads) {
   // Type and dereference external pointers
-  XPtr<std::vector<std::vector<double>>> p(dataPtr);
-  std::vector<std::vector<double>> data = *p;
+  XPtr<std::vector<std::vector<double>>> d(dataPtr);
+  std::vector<std::vector<double>> data = *d;
+  XPtr<std::vector<std::vector<double>>> r(ratePtr);
+  std::vector<std::vector<double>> rateX = *r;
+  XPtr<std::vector<std::vector<double>>> p(piPtr);
+  std::vector<std::vector<double>> piX = *p;
   
   // Math for setting up block size to pass to threads
   unsigned int sites=data.size();
@@ -176,18 +179,6 @@ std::vector<double> phylogeny::siteLL(SEXP dataPtr, const Rcpp::NumericMatrix& r
   unsigned int start = 0; // each thread does [start..end)
   unsigned int end = rows;
   
-  // Copy R data structures to stl formats for thread safe passing
-  std::vector<std::vector<double>> rateXS(sites,std::vector<double>(rateX.ncol()));
-  std::vector<std::vector<double>> piXS(sites,std::vector<double>(piX.ncol()));
-  for(unsigned int i=0; i<sites;i++){
-    for(int j=0;j<rateX.ncol();j++){
-      rateXS[i][j]=rateX(i,j);
-    }
-    for(int j=0;j<piX.ncol();j++){
-      piXS[i][j]=piX(i,j);
-    }
-  }
-   
   std::vector<double> siteLik(sites); // Numeric vector of the for the logProbability of each site
   std::vector<std::thread> workers; // vector of worker threads
   // loop over sites running the post-order message passing algorithm
@@ -198,7 +189,7 @@ std::vector<double> phylogeny::siteLL(SEXP dataPtr, const Rcpp::NumericMatrix& r
     // workers.push_back(std::thread(&phylogeny::test, this, std::ref(siteLik),start, end));
     // chunkLL(std::ref(siteLik), std::ref(dataS), std::ref(rateXS), std::ref(piXS),start, end);
     workers.push_back(std::thread(&phylogeny::chunkLL, this, std::ref(siteLik), std::ref(data),
-                                  std::ref(rateXS), std::ref(piXS),start, end));
+                                  std::ref(rateX), std::ref(piX),start, end));
     start = end;
     end = start + rows;
   }
