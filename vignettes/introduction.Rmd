@@ -50,7 +50,7 @@ rateMod=rateModel(data = ad,rateFormula=rateFormula)
 Now we can fit the model:
 
 ```{r}
-fitted_status<-fit(obj = rateMod,threads=2)
+microbenchmark::microbenchmark(fitted_status<-fit(obj = rateMod,threads=2),times=1)
 ```
 
 Once fitted we can extract the parameters and their standard errors and plot them:

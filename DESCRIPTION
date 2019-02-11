@@ -14,7 +14,8 @@ Imports: Rcpp (>= 1.0.0),
          ape,
          methods,
          numDeriv,
-         cowplot
+         cowplot,
+         ucminf
 LinkingTo: Rcpp,
            RcppArmadillo
 RcppModules: paramIndex,

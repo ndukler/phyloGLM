@@ -46,8 +46,9 @@ methods::setMethod("fit", signature(obj = "rateModel"), function(obj,scale=NULL,
   } 
   
   if(method=="l-bfgs-b"){
-    optMod=optim(par = getParams(obj)[which(!obj@fixed)],fn = phyloGLM:::scaledLL,obj=obj,scale=sca,threads=threads,
-                 method="L-BFGS-B", control = cont,hessian = TRUE)
+    optMod=ucminf::ucminf(par = getParams(obj)[which(!obj@fixed)],fn = scaledLL,obj=obj,scale=sca,threads=threads,
+                 hessian = TRUE)
+    optMod$counts=optMod$info[4]
     optMod$hessian=1/sca*optMod$hessian ## revert scaling on hessian
   } else if(method == "mlsl"){
     stop("Unimplemented optimization method specified")
