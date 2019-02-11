@@ -5,7 +5,9 @@
 \alias{se,rateModel,rateModel-method}
 \title{Compute standard errors for parameters}
 \arguments{
-\item{obj}{rateModel}
+\item{x}{rateModel object}
+
+\item{hess}{hessian matrix for (not supplied if x is a rateModel object)}
 }
 \value{
 a data.table with the parameter values and standard errors
