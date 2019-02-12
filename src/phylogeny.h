@@ -14,6 +14,7 @@ private:
   paramIndex piIndex; // Parameter index object for allelic stationary distribution parameters
   std::vector<int> edgeGroup; // Vector that holds group number for each branch, indexed by id# of child
   std::vector<std::vector<int>> edges; // Matrix of edges with columns parent,child
+  std::vector<std::vector<int>> sibblings; // Matrix of edges with columns parent,child
   std::vector<double> edgeLength; // Length of edges, indexed by the id# of the child
   int nAlleles; // Number of alleles
   int nTips; // Number of tips on the tree

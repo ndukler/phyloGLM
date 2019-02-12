@@ -14,7 +14,8 @@ using namespace Rcpp;
 phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFrame pDF,
                      Rcpp::IntegerVector eGroup, Rcpp::List treeInfo) : 
                      rateIndex(rDF[0],rDF[1],rDF[2],0),piIndex(pDF[0],pDF[1],pDF[2],rDF.nrow()),
-                     edges(Rcpp::as<IntegerMatrix>(treeInfo[0]).nrow(), std::vector<int>(2,0)){
+                     edges(Rcpp::as<IntegerMatrix>(treeInfo[0]).nrow(), std::vector<int>(2,0)),
+                     sibblings(Rcpp::as<Rcpp::ListOf<Rcpp::IntegerVector>>(treeInfo[3]).size()){
   params = Rcpp::as<std::vector<double>>(par);
   nAlleles = piIndex.getLookup().size()+1; // Add one since base "0" allele level has no parameters
   edgeGroup = Rcpp::as<std::vector<int>>(eGroup);
@@ -23,6 +24,12 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
   for(unsigned int i=0;i<edges.size();i++){
     edges[i][0]=tempEMat(i,0);
     edges[i][1]=tempEMat(i,1);
+  }
+  // Fill sibbling matrix
+  Rcpp::ListOf<Rcpp::IntegerVector> s = Rcpp::as<Rcpp::ListOf<Rcpp::IntegerVector>>(treeInfo[3]);
+  for(unsigned int i=0;i<sibblings.size();i++){
+    //Iterate over sibblings
+      sibblings[i]=Rcpp::as<std::vector<int>>(s[i]);
   }
   edgeLength = Rcpp::as<std::vector<double>>(as<Rcpp::NumericVector>(treeInfo[1]));
   nTips = as<int>(treeInfo[2]);
@@ -98,7 +105,7 @@ arma::mat phylogeny::rateMatrix(const arma::vec& pi,const double rate, const dou
 }
 
 /*
- * Tree algorithms
+ * Message passing algorithms
  */
 
 // Forward message passing for a single site
@@ -121,7 +128,6 @@ std::vector<std::vector<double>> phylogeny::postorderMessagePassing(const std::v
     //Compute the rate for edge n
     double r = rate(childInd,rateV);
     // Compute the log rate matrix for edge n
-    
     arma::mat logTMat = arma::log(rateMatrix(sitePi,r,edgeLength[childInd]));
     // // iterate over all parental alleles
     for(int a=0;a<nAlleles;a++){
@@ -131,6 +137,40 @@ std::vector<std::vector<double>> phylogeny::postorderMessagePassing(const std::v
         paths[c]=poTab[childInd][c] + logTMat(a,c);
       }
       poTab[parentInd][a] = poTab[parentInd][a] + logSumExp(paths);
+    }
+  }
+  return(poTab);
+}
+
+// [[Rcpp::export]]
+std::vector<std::vector<double>> phylogeny::preorderMessagePassing(const std::vector<std::vector<double>>& alpha,
+                                                                   const std::vector<double>& rateV, 
+                                                                   const std::vector<double>& piV) {
+  std::vector<std::vector<double>> poTab(nNode,std::vector<double>(nAlleles,0));
+  // Initialize the root
+  arma::vec sitePi = pi(piV);
+  for(int a=0;a<nAlleles;a++){
+    poTab[root][a]=sitePi[a];
+  }
+  // Now compute the probability for the interior nodes
+  for(unsigned int n=edges.size()-1;n!=0;n--){
+    int parentInd=edges[n][0];
+    int childInd=edges[n][1];
+    //Compute the rate for edge n
+    double r = rate(childInd,rateV);
+    // Compute the log rate matrix for edge n
+    arma::mat logTMat = arma::log(rateMatrix(sitePi,r,edgeLength[childInd]));
+    for(unsigned int a=0;a<nAlleles;a++){ // iterate over all alleles of focal node
+      std::vector<double> msgHolder(nAlleles);
+      for(unsigned int b=0;b<nAlleles;b++){ // iterate over all states of parental node summing over all sibblings
+        double parentContrib = poTab[parentInd][b] + logTMat[b][a]; // calculate the parent contribution
+        double sibContrib = 0; // holds the sibling contribution
+        for(int s=0;s<siblings[childInd].size();s++){ // iterate over siblings
+          sibContrib=sibContrib+logSumExp(alpha(siblings[childInd](s),_)+tMat[siblings[childInd](s)](b,_));
+        }
+        msgHolder(b)=parentContrib+sibContrib;
+      }
+      poTab(childInd,a)=logSumExp(msgHolder);
     }
   }
   return(poTab);

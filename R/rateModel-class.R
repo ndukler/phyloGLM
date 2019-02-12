@@ -111,8 +111,13 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   ## Create vector of edge lengths that are indexed by the child id #  
   eL = rep(-1,max(getTree(data)$edge[,2]))
   eL[getTree(data)$edge[,2]] = getTree(data)$edge.length
+  ## Get the list of sibblings for every node
+  sib=list()
+  for(n in unique(as.vector(tree$edge))){
+    sib[[n]]=getSiblings(tree,n)
+  }
   ## Collect tree info in list
-  treeInfo=list(getTree(data)$edge-1, eL,length(getTree(data)$tip.label))
+  treeInfo=list(getTree(data)$edge-1, eL,length(getTree(data)$tip.label),sib)
   ## Create edge group vector ordered by child id #
   eG = rep(-1,max(lineageTable$child))
   eG[lineageTable$child]=lineageTable$edgeGroup
