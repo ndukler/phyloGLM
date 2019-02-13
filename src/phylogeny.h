@@ -49,6 +49,8 @@ public:
   Rcpp::DataFrame getPiIndex();
   std::vector<double> getParams();
   void setParams(Rcpp::NumericVector x, Rcpp::IntegerVector index);
+  // Functions for test suite purposes only
+  Rcpp::ListOf<std::vector<std::vector<double>>> testMsgPassing(SEXP dataPtr, SEXP ratePtr, SEXP piPtr);
 };
 
 #endif

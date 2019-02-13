@@ -151,7 +151,7 @@ std::vector<std::vector<double>> phylogeny::preorderMessagePassing(const std::ve
   // Initialize the root
   arma::vec sitePi = pi(piV);
   for(int a=0;a<nAlleles;a++){
-    poTab[root][a]=sitePi[a];
+    poTab[root][a]=std::log(sitePi[a]);
   }
   // Pre-compute the transition matricies and store in vector indexed by child 
   // Note: the root index will be empty, that's ok b/c it should never be called
@@ -204,7 +204,6 @@ void phylogeny::chunkMarginal(std::vector<std::vector<double>>& marginal, const 
       }
       // Compute log-partition function
       double Z = logSumExp(marginal[i]);
-      std::cout << Z << std::endl;
       for(int a=0;a<nAlleles;a++){ // iterate over alleles
         marginal[i][a] = marginal[i][a]-Z; // Normalize to compute the log-marginal 
       }
@@ -340,6 +339,20 @@ void phylogeny::setParams(const Rcpp::NumericVector x, const Rcpp::IntegerVector
 /*
  * Some functions to be called by the test suite
  */
+Rcpp::ListOf<std::vector<std::vector<double>>> phylogeny::testMsgPassing(SEXP dataPtr, SEXP ratePtr, SEXP piPtr) {
+  // Type and dereference external pointers
+  XPtr<std::vector<std::vector<double>>> d(dataPtr);
+  std::vector<std::vector<double>> data = *d;
+  XPtr<std::vector<std::vector<double>>> r(ratePtr);
+  std::vector<std::vector<double>> rateX = *r;
+  XPtr<std::vector<std::vector<double>>> p(piPtr);
+  std::vector<std::vector<double>> piX = *p;
+  
+  std::vector<std::vector<double>> alpha = postorderMessagePassing(data[0], rateX[0], piX[0]);
+  std::vector<std::vector<double>> beta = preorderMessagePassing(alpha, rateX[0], piX[0]);
+  Rcpp::ListOf<std::vector<std::vector<double>>> L = List::create( _["alpha"] = alpha , _["beta"] = beta);
+  return(L);
+}
 
 RCPP_MODULE(phylogeny) {
   class_<phylogeny>( "phylogeny" )
@@ -353,5 +366,6 @@ RCPP_MODULE(phylogeny) {
   .method("marginal", &phylogeny::marginal)
   .method("getParams", &phylogeny::getParams)
   .method("setParams", &phylogeny::setParams)
+  .method("testMsgPassing", &phylogeny::testMsgPassing)
   ;
 }

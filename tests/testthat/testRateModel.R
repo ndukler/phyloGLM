@@ -79,15 +79,30 @@ if(exists('rateMod')){
   testthat::test_that("Allele stationary distribution calculations",
                       testthat::expect_equal(log(as.numeric(rateMod@phylogeny$rateMatrix(piProb,r2,getTree(ad)$edge.length[3]))),
                                              as.numeric(qBaseNormE3)))
-  
-  testthat::context("rateModel logLikelihood calculation")
-    ## Compute log-likelihood
+  ## -------------------------------------------------------------------------- ##
+  testthat::context("rateModel message passing algorithms")
+  ## Compute post-order messages   
   pl1=exp(qBaseNormE1) %*% matrix(c(1,0),ncol = 1)
   pl2=exp(qBaseNormE2) %*% matrix(c(0,1),ncol=1)  
-  pl3=exp(qBaseNormE3) %*% matrix(c(0,1),ncol=1)  
-
+  pl3=exp(qBaseNormE3) %*% matrix(c(0,1),ncol=1) 
+  
+  ## Compute the beta table by hand
+  beta1=t(pl2*pl3*piProb) %*% exp(qBaseNormE1)
+  beta2=t(pl1*pl3*piProb) %*% exp(qBaseNormE2) 
+  beta3=t(pl1*pl2*piProb) %*% exp(qBaseNormE3)
+  logBetaAll=log(c(beta1,beta2,beta3,piProb))
+  ## Compute alpha and beta tables with test function
+  abTab=rateMod@phylogeny$testMsgPassing(ad@data@x,rateMod@rateDM@x,rateMod@piDM@x)
+  ## Check pre-order message passing algorithm
+  testthat::test_that("Allele stationary distribution calculations",
+                      testthat::expect_equal(logBetaAll,unlist(abTab$beta)))
+  
+  ## -------------------------------------------------------------------------- ##
+  testthat::context("rateModel logLikelihood calculation")
+  ## Compute log-likelihood
   ## Check that the manually computed log-likelihood is equal to the output of the function
   testthat::test_that("The correct log-likelihood is computed - E3",
                       testthat::expect_equal(logSumExp(log(pl1)+log(pl2)+log(pl3)+log(piProb)),siteLL(obj=rateMod)))
+
 }
 
