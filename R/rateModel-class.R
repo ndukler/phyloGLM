@@ -114,7 +114,7 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   ## Get the list of sibblings for every node
   sib=list()
   for(n in unique(as.vector(tree$edge))){
-    sib[[n]]=getSiblings(tree,n)
+    sib[[n]]=getSiblings(tree,n)-1
   }
   ## Collect tree info in list
   treeInfo=list(getTree(data)$edge-1, eL,length(getTree(data)$tip.label),sib)

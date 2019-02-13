@@ -15,7 +15,7 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
                      Rcpp::IntegerVector eGroup, Rcpp::List treeInfo) : 
                      rateIndex(rDF[0],rDF[1],rDF[2],0),piIndex(pDF[0],pDF[1],pDF[2],rDF.nrow()),
                      edges(Rcpp::as<IntegerMatrix>(treeInfo[0]).nrow(), std::vector<int>(2,0)),
-                     sibblings(Rcpp::as<Rcpp::ListOf<Rcpp::IntegerVector>>(treeInfo[3]).size()){
+                     siblings(Rcpp::as<Rcpp::ListOf<Rcpp::IntegerVector>>(treeInfo[3]).size()){
   params = Rcpp::as<std::vector<double>>(par);
   nAlleles = piIndex.getLookup().size()+1; // Add one since base "0" allele level has no parameters
   edgeGroup = Rcpp::as<std::vector<int>>(eGroup);
@@ -25,11 +25,11 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
     edges[i][0]=tempEMat(i,0);
     edges[i][1]=tempEMat(i,1);
   }
-  // Fill sibbling matrix
+  // Fill sibling matrix
   Rcpp::ListOf<Rcpp::IntegerVector> s = Rcpp::as<Rcpp::ListOf<Rcpp::IntegerVector>>(treeInfo[3]);
-  for(unsigned int i=0;i<sibblings.size();i++){
-    //Iterate over sibblings
-      sibblings[i]=Rcpp::as<std::vector<int>>(s[i]);
+  for(unsigned int i=0;i<siblings.size();i++){
+    //Iterate over siblings
+    siblings[i]=Rcpp::as<std::vector<int>>(s[i]);
   }
   edgeLength = Rcpp::as<std::vector<double>>(as<Rcpp::NumericVector>(treeInfo[1]));
   nTips = as<int>(treeInfo[2]);
@@ -74,7 +74,6 @@ arma::vec phylogeny::pi(const std::vector<double>& piV){
     std::vector<int> parInd = piIndex.getIndex(std::vector<int>(1,i-1),col,true);
     double temp=0; // accumulator value for exponenetial
     for(unsigned int j=0;j<parInd.size();j++){
-      //Rcpp::Rcout << j << " " << parInd[j] << " " << params[parInd[j]] << " " << piV[j] << std::endl;
       temp+=params[parInd[j]]*piV[j];
     }
     //Rcpp::Rcout << "temp: " << temp << std::endl;
@@ -87,6 +86,7 @@ arma::vec phylogeny::pi(const std::vector<double>& piV){
   return(p/Z);
 }
 
+// Note that the rows are the parent allele and the columns are the child allele
 arma::mat phylogeny::rateMatrix(const arma::vec& pi,const double rate, const double branchLength) {
   // initalize temp matrix with all ones
   arma::mat temp(nAlleles,nAlleles,arma::fill::ones);
@@ -109,6 +109,7 @@ arma::mat phylogeny::rateMatrix(const arma::vec& pi,const double rate, const dou
  */
 
 // Forward message passing for a single site
+// Note that poTab[i][j]  i=node index, j= the allele
 std::vector<std::vector<double>> phylogeny::postorderMessagePassing(const std::vector<double>& data, 
                                                   const std::vector<double>& rateV, const std::vector<double>& piV) {
   // Initialize the message table
@@ -142,7 +143,7 @@ std::vector<std::vector<double>> phylogeny::postorderMessagePassing(const std::v
   return(poTab);
 }
 
-// [[Rcpp::export]]
+// Backward message passing on a single site
 std::vector<std::vector<double>> phylogeny::preorderMessagePassing(const std::vector<std::vector<double>>& alpha,
                                                                    const std::vector<double>& rateV, 
                                                                    const std::vector<double>& piV) {
@@ -152,28 +153,98 @@ std::vector<std::vector<double>> phylogeny::preorderMessagePassing(const std::ve
   for(int a=0;a<nAlleles;a++){
     poTab[root][a]=sitePi[a];
   }
+  // Pre-compute the transition matricies and store in vector indexed by child 
+  // Note: the root index will be empty, that's ok b/c it should never be called
+  std::vector<arma::mat> tMat(nNode,arma::mat(nAlleles,nAlleles));
+  for(unsigned int n=0;n<edges.size();n++){
+    int childInd=edges[n][1];
+    double r = rate(childInd,rateV);
+    tMat[childInd]=arma::log(rateMatrix(sitePi,r,edgeLength[childInd]));   
+  }
   // Now compute the probability for the interior nodes
-  for(unsigned int n=edges.size()-1;n!=0;n--){
+  for(int n=edges.size()-1;n>=0;n--){
     int parentInd=edges[n][0];
     int childInd=edges[n][1];
-    //Compute the rate for edge n
-    double r = rate(childInd,rateV);
-    // Compute the log rate matrix for edge n
-    arma::mat logTMat = arma::log(rateMatrix(sitePi,r,edgeLength[childInd]));
-    for(unsigned int a=0;a<nAlleles;a++){ // iterate over all alleles of focal node
+    for(int a=0;a<nAlleles;a++){ // iterate over all alleles of focal node
       std::vector<double> msgHolder(nAlleles);
-      for(unsigned int b=0;b<nAlleles;b++){ // iterate over all states of parental node summing over all sibblings
-        double parentContrib = poTab[parentInd][b] + logTMat[b][a]; // calculate the parent contribution
+      for(int b=0;b<nAlleles;b++){ // iterate over all states of parental node summing over all siblings
+        double parentContrib = poTab[parentInd][b] + tMat[childInd](b,a); // calculate the parent contribution
         double sibContrib = 0; // holds the sibling contribution
-        for(int s=0;s<siblings[childInd].size();s++){ // iterate over siblings
-          sibContrib=sibContrib+logSumExp(alpha(siblings[childInd](s),_)+tMat[siblings[childInd](s)](b,_));
+        for(unsigned int s=0;s<siblings[childInd].size();s++){ // iterate over siblings
+          std::vector<double> sPartial(nAlleles);
+          for(int c = 0; c < nAlleles; c++){ // Iterate over sibling alleles
+            sPartial[c]=alpha[siblings[childInd][s]][c]+tMat[siblings[childInd][s]](b,c);
+          }
+          sibContrib+=logSumExp(sPartial);
         }
-        msgHolder(b)=parentContrib+sibContrib;
+        msgHolder[b]=parentContrib+sibContrib;
       }
-      poTab(childInd,a)=logSumExp(msgHolder);
+      poTab[childInd][a]=logSumExp(msgHolder);
     }
   }
   return(poTab);
+}
+
+/*
+ * Marginal calculations
+ */
+
+void phylogeny::chunkMarginal(std::vector<std::vector<double>>& marginal, const std::vector<std::vector<double>>& data, 
+                        const std::vector<std::vector<double>>& rateX, const std::vector<std::vector<double>>& piX,
+                        unsigned int start, unsigned int end){
+  for(unsigned int i=start;i<end;i++){
+    arma::vec logPi = arma::log(pi(piX[i]));
+    // Rcpp::Rcout << "LogPi: " << logPi << std::endl;
+    std::vector<std::vector<double>> alpha = postorderMessagePassing(data[i], rateX[i], piX[i]);
+    std::vector<std::vector<double>> beta = preorderMessagePassing(alpha, rateX[i], piX[i]);
+    for(int n=0; n<nNode;n++){
+      for(int a=0;a<nAlleles;a++){ // iterate over alleles
+        // add contributions from above, below and the stationary dist 
+        marginal[i][a] = beta[n][a]+alpha[n][a]; 
+      }
+      // Compute log-partition function
+      double Z = logSumExp(marginal[i]);
+      std::cout << Z << std::endl;
+      for(int a=0;a<nAlleles;a++){ // iterate over alleles
+        marginal[i][a] = marginal[i][a]-Z; // Normalize to compute the log-marginal 
+      }
+    }
+  }
+}
+
+std::vector<std::vector<double>> phylogeny::marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads) {
+  // Type and dereference external pointers
+  XPtr<std::vector<std::vector<double>>> d(dataPtr);
+  std::vector<std::vector<double>> data = *d;
+  XPtr<std::vector<std::vector<double>>> r(ratePtr);
+  std::vector<std::vector<double>> rateX = *r;
+  XPtr<std::vector<std::vector<double>>> p(piPtr);
+  std::vector<std::vector<double>> piX = *p;
+  
+  // Math for setting up block size to pass to threads
+  unsigned int sites=data.size();
+  unsigned int rows=sites / threads; // Number of blocks that parallel loop must be executed over
+  unsigned int extra = sites % threads; // remaining rows for last thread
+  unsigned int start = 0; // each thread does [start..end)
+  unsigned int end = rows;
+  
+  std::vector<std::vector<double>> marginal(sites,std::vector<double>(nAlleles)); // Marginal per site distribution
+  std::vector<std::thread> workers; // vector of worker threads
+  // loop over sites running the post-order message passing algorithm
+  for(unsigned int t=0;t<threads;t++){
+    if (t == threads-1){ // last thread does extra rows:
+      end += extra;
+    }
+    workers.push_back(std::thread(&phylogeny::chunkMarginal, this, std::ref(marginal), std::ref(data),
+                                  std::ref(rateX), std::ref(piX),start, end));
+    start = end;
+    end = start + rows;
+  }
+  // Wait for all threads to finish
+  for (auto& w : workers) {
+    w.join();
+  }
+  return(marginal);
 }
 
 /*
@@ -266,6 +337,10 @@ void phylogeny::setParams(const Rcpp::NumericVector x, const Rcpp::IntegerVector
   }
 }
 
+/*
+ * Some functions to be called by the test suite
+ */
+
 RCPP_MODULE(phylogeny) {
   class_<phylogeny>( "phylogeny" )
   .constructor<Rcpp::NumericVector, Rcpp::DataFrame, Rcpp::DataFrame, Rcpp::IntegerVector,Rcpp::List>()
@@ -275,6 +350,7 @@ RCPP_MODULE(phylogeny) {
   .method("getRateIndex", &phylogeny::getRateIndex)
   .method("getPiIndex", &phylogeny::getPiIndex)
   .method("siteLL", &phylogeny::siteLL)
+  .method("marginal", &phylogeny::marginal)
   .method("getParams", &phylogeny::getParams)
   .method("setParams", &phylogeny::setParams)
   ;

@@ -18,7 +18,7 @@ set.seed(123)
 ## Set some parameters for the simulation
 species=c("A","B","C","D","E")
 nAlleles=3
-nSites=5000
+nSites=4
 
 ## Create test trees, both one that will fail, and one that will pass
 tree=ape::rtree(n = length(species),tip.label = species)
@@ -58,5 +58,10 @@ Once fitted we can extract the parameters and their standard errors and plot the
 ```{r}
 seTab=se(rateMod,fitted_status$hessian)
 plotParams(seTab)
+```
+We can also compute the posterior allelic probabilties accross all nodes
+```{r}
+m=marginal(rateMod)
+# s
 ```
 
