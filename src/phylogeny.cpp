@@ -189,8 +189,10 @@ std::vector<std::vector<double>> phylogeny::preorderMessagePassing(const std::ve
  * Marginal calculations
  */
 
-void phylogeny::chunkMarginal(std::vector<std::vector<double>>& marginal, const std::vector<std::vector<double>>& data, 
-                        const std::vector<std::vector<double>>& rateX, const std::vector<std::vector<double>>& piX,
+void phylogeny::chunkMarginal(std::vector<std::vector<std::vector<double>>>& marginal, 
+                              const std::vector<std::vector<double>>& data,
+                              const std::vector<std::vector<double>>& rateX, 
+                              const std::vector<std::vector<double>>& piX,
                         unsigned int start, unsigned int end){
   for(unsigned int i=start;i<end;i++){
     arma::vec logPi = arma::log(pi(piX[i]));
@@ -200,18 +202,18 @@ void phylogeny::chunkMarginal(std::vector<std::vector<double>>& marginal, const 
     for(int n=0; n<nNode;n++){
       for(int a=0;a<nAlleles;a++){ // iterate over alleles
         // add contributions from above, below and the stationary dist 
-        marginal[i][a] = beta[n][a]+alpha[n][a]; 
+        marginal[i][n][a] = beta[n][a]+alpha[n][a]; 
       }
       // Compute log-partition function
-      double Z = logSumExp(marginal[i]);
+      double Z = logSumExp(marginal[i][n]);
       for(int a=0;a<nAlleles;a++){ // iterate over alleles
-        marginal[i][a] = marginal[i][a]-Z; // Normalize to compute the log-marginal 
+        marginal[i][n][a] = marginal[i][n][a]-Z; // Normalize to compute the log-marginal 
       }
     }
   }
 }
 
-std::vector<std::vector<double>> phylogeny::marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads) {
+std::vector<std::vector<std::vector<double>>> phylogeny::marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads) {
   // Type and dereference external pointers
   XPtr<std::vector<std::vector<double>>> d(dataPtr);
   std::vector<std::vector<double>> data = *d;
@@ -227,7 +229,7 @@ std::vector<std::vector<double>> phylogeny::marginal(SEXP dataPtr, SEXP ratePtr,
   unsigned int start = 0; // each thread does [start..end)
   unsigned int end = rows;
   
-  std::vector<std::vector<double>> marginal(sites,std::vector<double>(nAlleles)); // Marginal per site distribution
+  std::vector<std::vector<std::vector<double>>> marginal(sites,std::vector<std::vector<double>>(nNode,std::vector<double>(nAlleles))); // Marginal per site distribution
   std::vector<std::thread> workers; // vector of worker threads
   // loop over sites running the post-order message passing algorithm
   for(unsigned int t=0;t<threads;t++){

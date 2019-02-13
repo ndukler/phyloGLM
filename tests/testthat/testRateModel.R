@@ -94,7 +94,7 @@ if(exists('rateMod')){
   ## Compute alpha and beta tables with test function
   abTab=rateMod@phylogeny$testMsgPassing(ad@data@x,rateMod@rateDM@x,rateMod@piDM@x)
   ## Check pre-order message passing algorithm
-  testthat::test_that("Allele stationary distribution calculations",
+  testthat::test_that("Check pre-order message passing table",
                       testthat::expect_equal(logBetaAll,unlist(abTab$beta)))
   
   ## -------------------------------------------------------------------------- ##
@@ -103,6 +103,12 @@ if(exists('rateMod')){
   ## Check that the manually computed log-likelihood is equal to the output of the function
   testthat::test_that("The correct log-likelihood is computed - E3",
                       testthat::expect_equal(logSumExp(log(pl1)+log(pl2)+log(pl3)+log(piProb)),siteLL(obj=rateMod)))
+  
+  ## -------------------------------------------------------------------------- ##
+  testthat::context("Marginal calculations")
+  testthat::test_that("Check single node marginals",
+                      testthat::expect_equal(c(1,0,0,1,0,1, ((pl1*pl2*pl3)*piProb)/sum(((pl1*pl2*pl3)*piProb))),
+                                             exp(unlist(marginal(rateMod)))))
 
 }
 

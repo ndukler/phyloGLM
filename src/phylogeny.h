@@ -31,9 +31,11 @@ private:
                const std::vector<std::vector<double>>& rateX, const std::vector<std::vector<double>>& piX,
                unsigned int start, unsigned int end);
   void test(std::vector<double>& siteLik,int start, int end);
-  void chunkMarginal(std::vector<std::vector<double>>& marginal, const std::vector<std::vector<double>>& data, 
-                                const std::vector<std::vector<double>>& rateX, const std::vector<std::vector<double>>& piX,
-                                unsigned int start, unsigned int end);  
+  void chunkMarginal(std::vector<std::vector<std::vector<double>>>& marginal, 
+                                const std::vector<std::vector<double>>& data,
+                                const std::vector<std::vector<double>>& rateX, 
+                                const std::vector<std::vector<double>>& piX,
+                                unsigned int start, unsigned int end);
     
 
 public:
@@ -44,7 +46,7 @@ public:
   arma::vec pi(const std::vector<double>& piV);
   arma::mat rateMatrix(const arma::vec & pi,const double rate, const double branchLength);
   std::vector<double> siteLL(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads);
-  std::vector<std::vector<double>> marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads);
+  std::vector<std::vector<std::vector<double>>> marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads);
   Rcpp::DataFrame getRateIndex();
   Rcpp::DataFrame getPiIndex();
   std::vector<double> getParams();
