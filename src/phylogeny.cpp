@@ -275,14 +275,15 @@ void phylogeny::test(std::vector<double>& siteLik, int start, int end){
 }
 
 
-std::vector<double> phylogeny::siteLL(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads) {
+std::vector<double> phylogeny::siteLL(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr,
+                                      const unsigned int threads) {
   // Type and dereference external pointers
   XPtr<std::vector<std::vector<double>>> d(dataPtr);
-  std::vector<std::vector<double>> data = *d;
+  std::vector<std::vector<double>> & data = *d;
   XPtr<std::vector<std::vector<double>>> r(ratePtr);
-  std::vector<std::vector<double>> rateX = *r;
+  std::vector<std::vector<double>> & rateX = *r;
   XPtr<std::vector<std::vector<double>>> p(piPtr);
-  std::vector<std::vector<double>> piX = *p;
+  std::vector<std::vector<double>> & piX = *p;
   
   // Math for setting up block size to pass to threads
   unsigned int sites=data.size();
