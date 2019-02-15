@@ -316,7 +316,10 @@ std::vector<double> phylogeny::siteLL(const SEXP dataPtr, const SEXP ratePtr,con
 double phylogeny::ll(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr, double scale,
                                       const unsigned int threads){
   std::vector<double> sLL = siteLL(dataPtr, ratePtr,piPtr,threads);
-  double LL = std::accumulate(sLL.begin(), sLL.end(), 0) * scale;
+  double LL=0;
+  for (auto& n : sLL)
+    LL += n;
+  LL=LL*scale;
   return(LL);
 }
 
