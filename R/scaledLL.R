@@ -17,12 +17,16 @@ methods::setGeneric("scaledLL", function(x,obj,scale=1,threads=1,...) {
 #' @name scaledLL
 #' @rdname scaledLL
 methods::setMethod("scaledLL", signature(x="missing",obj = "rateModel"), function(x,obj,scale=1,threads=1) {
-  return(sum(siteLL(obj,threads=threads))*scale)
+  return(obj@phylogeny$ll(obj@alleleData$alleleData@data@x,
+                              obj@rateDM@x,
+                              obj@piDM@x,scale,threads))
 })
 
 #' @name scaledLL
 #' @rdname scaledLL
 methods::setMethod("scaledLL", signature(x="numeric",obj = "rateModel"), function(x,obj,scale=1,threads=1) {
   setParams(obj,x,which(!obj@fixed)-1)
-  return(sum(siteLL(obj,threads = threads))*scale)
+  return(obj@phylogeny$ll(obj@alleleData$alleleData@data@x,
+                          obj@rateDM@x,
+                          obj@piDM@x,scale,threads))
 })

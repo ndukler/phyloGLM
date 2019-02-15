@@ -46,6 +46,8 @@ public:
   arma::vec pi(const std::vector<double>& piV);
   arma::mat rateMatrix(const arma::vec & pi,const double rate, const double branchLength);
   std::vector<double> siteLL(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr,const unsigned int threads);
+  double ll(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr, double scale,
+                       const unsigned int threads);
   std::vector<std::vector<std::vector<double>>> marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads);
   Rcpp::DataFrame getRateIndex();
   Rcpp::DataFrame getPiIndex();

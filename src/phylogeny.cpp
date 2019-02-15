@@ -313,6 +313,12 @@ std::vector<double> phylogeny::siteLL(const SEXP dataPtr, const SEXP ratePtr,con
   return(siteLik);
 }
 
+double phylogeny::ll(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr, double scale,
+                                      const unsigned int threads){
+  std::vector<double> sLL = siteLL(dataPtr, ratePtr,piPtr,threads);
+  double LL = std::accumulate(sLL.begin(), sLL.end(), 0) * scale;
+  return(LL);
+}
 
 /*
  * Getter and setter functions
@@ -366,6 +372,7 @@ RCPP_MODULE(phylogeny) {
   .method("getRateIndex", &phylogeny::getRateIndex)
   .method("getPiIndex", &phylogeny::getPiIndex)
   .method("siteLL", &phylogeny::siteLL)
+  .method("ll", &phylogeny::ll)
   .method("marginal", &phylogeny::marginal)
   .method("getParams", &phylogeny::getParams)
   .method("setParams", &phylogeny::setParams)
