@@ -4,7 +4,7 @@
 \alias{show}
 \title{Replace default print format}
 \arguments{
-\item{x}{alleleData or rateModel object}
+\item{object}{alleleData or rateModel object}
 }
 \value{
 A tree of class \code{phylo}

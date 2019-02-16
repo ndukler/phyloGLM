@@ -4,7 +4,7 @@
 \alias{fit}
 \title{Fits rate model}
 \arguments{
-\item{obj}{rateModel}
+\item{rateModel}{rateModel}
 
 \item{scale}{a scale factor to apply to log-likelihood, defaults to -1/nsites}
 

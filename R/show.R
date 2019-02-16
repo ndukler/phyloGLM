@@ -1,7 +1,7 @@
 #' Replace default print format
 #'
 #' Method to replace default print appearance for 
-#' @param x alleleData or rateModel object
+#' @param object alleleData or rateModel object
 #' @name show
 #' @include alleleData-class.R
 #' @include rateModel-class.R

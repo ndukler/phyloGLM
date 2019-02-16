@@ -4,7 +4,7 @@
 \alias{getTree}
 \title{Gets tree}
 \arguments{
-\item{obj}{alleleData or rateModel object}
+\item{model}{alleleData or rateModel object}
 }
 \value{
 A tree of class \code{phylo}

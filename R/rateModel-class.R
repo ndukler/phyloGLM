@@ -107,7 +107,7 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
                     stringsAsFactors = FALSE)
   piP=expand.grid(group=2:data@nAlleles-2,column=1:ncol(piDM)-1,stringsAsFactors = FALSE)
   ## Create parameter vector
-  params=rep(1,nrow(rateP)+nrow(piP))
+  params=rep(0,nrow(rateP)+nrow(piP))
   ## Create vector of edge lengths that are indexed by the child id #  
   eL = rep(-1,max(getTree(data)$edge[,2]))
   eL[getTree(data)$edge[,2]] = getTree(data)$edge.length

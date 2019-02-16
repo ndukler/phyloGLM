@@ -5,7 +5,7 @@
 \alias{getParams,rateModel,rateModel-method}
 \title{Plot coefficents}
 \arguments{
-\item{x}{rateModel object}
+\item{model}{rateModel object}
 }
 \value{
 vector of parameter values

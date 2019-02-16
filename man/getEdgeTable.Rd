@@ -6,7 +6,7 @@
 \alias{getEdgeTable,rateModel,rateModel-method}
 \title{Get edge table}
 \arguments{
-\item{x}{alleleData or rateModel object}
+\item{model}{alleleData or rateModel object}
 }
 \value{
 data.table containing edge ids

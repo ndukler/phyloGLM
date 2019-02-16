@@ -4,7 +4,7 @@
 \alias{marginal}
 \title{Node marginals}
 \arguments{
-\item{obj}{rateModel object}
+\item{model}{rateModel object}
 
 \item{threads}{number of threads to use}
 }

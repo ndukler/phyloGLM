@@ -6,7 +6,7 @@
 \arguments{
 \item{x}{a set of parameters to compute the log-likelihood for (optional)}
 
-\item{obj}{rateModel object}
+\item{model}{rateModel object}
 
 \item{scale}{value to scale log-likelihood by (default=1)}
 

@@ -5,7 +5,9 @@
 \alias{siteLL,rateModel,rateModel-method}
 \title{Compute sitewise log-likelihoods}
 \arguments{
-\item{x}{rateModel object}
+\item{model}{rateModel object}
+
+\item{threads}{number of threads to use}
 }
 \value{
 vector of parameter values

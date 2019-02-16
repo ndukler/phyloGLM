@@ -7,6 +7,8 @@
 \title{Plot parameter values}
 \arguments{
 \item{x}{rateModel object or the data.frame from se(rateModel)}
+
+\item{alpha}{plot the confidence interval of the parameters from [alpha/2,1-alpha/2]}
 }
 \value{
 a data.table with the parameter values and standard errors

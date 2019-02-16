@@ -32,7 +32,8 @@ if(exists('rateMod')){
   testthat::context("rateModel object getter/setter functions")
   ## Check that parameter vector is the correct length
   testthat::test_that("Parameter vector is retieved correctly",
-                      testthat::expect_equal(getParams(obj = rateMod),rep(1,12)))
+                      testthat::expect_equal(getParams(model = rateMod),rep(0,12)))
+  setParams(rateMod,rep(1,length(getParams(rateMod))),0:(length(getParams(rateMod))-1))
   testthat::test_that("Parameter vector is set correctly",
                       testthat::expect_equal({
                         setParams(rateMod,c(0.1,0.2,0.3),6:8)
@@ -102,7 +103,7 @@ if(exists('rateMod')){
   ## Compute log-likelihood
   ## Check that the manually computed log-likelihood is equal to the output of the function
   testthat::test_that("The correct log-likelihood is computed - E3",
-                      testthat::expect_equal(logSumExp(log(pl1)+log(pl2)+log(pl3)+log(piProb)),siteLL(obj=rateMod)))
+                      testthat::expect_equal(logSumExp(log(pl1)+log(pl2)+log(pl3)+log(piProb)),siteLL(model=rateMod)))
   
   ## -------------------------------------------------------------------------- ##
   testthat::context("Marginal calculations")

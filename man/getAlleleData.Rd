@@ -4,7 +4,7 @@
 \alias{getAlleleData}
 \title{Returns alleleData}
 \arguments{
-\item{obj}{rateModel}
+\item{model}{rateModel}
 }
 \value{
 alleleData object

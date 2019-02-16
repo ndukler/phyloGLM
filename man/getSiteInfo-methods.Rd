@@ -6,7 +6,7 @@
 \alias{getSiteInfo,rateModel,rateModel-method}
 \title{Extract site information table}
 \arguments{
-\item{obj}{alleleData or rateModel object}
+\item{model}{alleleData or rateModel object}
 }
 \value{
 data.table containing site info
