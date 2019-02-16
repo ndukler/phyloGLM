@@ -1,4 +1,4 @@
-methods::setGeneric("fit", function(rateModel,scale=NULL,method=c("l-bfgs-b","mlsl","stogo"),threads=1,control=list(),
+methods::setGeneric("fit", function(model,scale=NULL,method=c("l-bfgs-b","mlsl","stogo"),threads=1,control=list(),
                                     log="log.txt") {
   standardGeneric("fit")
 })
@@ -6,7 +6,7 @@ methods::setGeneric("fit", function(rateModel,scale=NULL,method=c("l-bfgs-b","ml
 #' Fits rate model
 #'
 #' Fits rate model object and returns fitted model
-#' @param rateModel rateModel
+#' @param model rateModel
 #' @param scale a scale factor to apply to log-likelihood, defaults to -1/nsites
 #' @param method Optimization method to use ("l-bfgs-b","mlsl","stogo")
 #' @param threads number of threads to use
@@ -17,11 +17,11 @@ methods::setGeneric("fit", function(rateModel,scale=NULL,method=c("l-bfgs-b","ml
 #' @examples
 #' 
 #' @export
-methods::setMethod("fit", signature(rateModel = "rateModel"), function(rateModel,scale=NULL,method=c("l-bfgs-b","mlsl","stogo"),
+methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=NULL,method=c("l-bfgs-b","mlsl","stogo"),
                                                                  threads=1,control=list(),log="log.txt") {
   ## scale defaults to -1/nsites
   if(is.null(scale)){
-    scale=-1/getAlleleData(rateModel)@data@nrow
+    scale=-1/getAlleleData(model)@data@nrow
   }
   ## Check method and set defaults
   if(length(method)>1){
@@ -32,14 +32,14 @@ methods::setMethod("fit", signature(rateModel = "rateModel"), function(rateModel
   
   ## NEED TO FIX SO THAT RATE PARAMETERS CAN BE FIXED INDIVIDUALLY BUT PI IS ALL OR NOTHING PER SITE!!!!!
   ## Where the parameter values are fixed, set lb=ub=value
-  ## ub[rateModel@fixed]=x[rateModel@fixed]
-  ## lb[rateModel@fixed]=x[rateModel@fixed]
-  lb=rep(-10,length(getParams(rateModel)))
-  ub=rep(10,length(getParams(rateModel)))
+  ## ub[model@fixed]=x[model@fixed]
+  ## lb[model@fixed]=x[model@fixed]
+  lb=rep(-10,length(getParams(model)))
+  ub=rep(10,length(getParams(model)))
   
   ## Set default control options
   if(method %in% c("l-bfgs-b")){
-    cont = list(ndeps=rep(10^-6,sum(!rateModel@fixed)))
+    cont = list(ndeps=rep(10^-6,sum(!model@fixed)))
   } else {
     cont = nloptr::nl.opts()
   }
@@ -51,27 +51,27 @@ methods::setMethod("fit", signature(rateModel = "rateModel"), function(rateModel
   
   if(method=="l-bfgs-b"){
     sink(file=log)
-    optMod=ucminf::ucminf(par = getParams(rateModel)[which(!rateModel@fixed)],fn = scaledLL,rateModel=rateModel,scale=scale,
+    optMod=ucminf::ucminf(par = getParams(model)[which(!model@fixed)],fn = scaledLL,model=model,scale=scale,
                           threads=threads,hessian = TRUE)
     sink()
     optMod$counts=optMod$info[4]
     optMod$hessian=1/scale*optMod$hessian ## revert scaling on hessian
   } else if(method == "mlsl"){
     stop("Unimplemented optimization method specified")
-    optMod=nloptr::mlsl(x0=getParams(rateModel)[which(!rateModel@fixed)],fn = phyloGLM:::scaledLL,rateModel=rateModel,scale=scale,
+    optMod=nloptr::mlsl(x0=getParams(model)[which(!model@fixed)],fn = phyloGLM:::scaledLL,model=model,scale=scale,
                         threads=threads,control = cont,lower = lb,upper = ub)
-    optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,rateModel=rateModel,scale=1)
+    optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,model=model,scale=1)
     counts=optMod$iter
   } else if(method == "stogo"){
     stop("Unimplemented optimization method specified")
-    optMod=nloptr::stogo(x0=getParams(rateModel)[which(!rateModel@fixed)],fn = phyloGLM:::scaledLL,rateModel=rateModel,scale=scale,
+    optMod=nloptr::stogo(x0=getParams(model)[which(!model@fixed)],fn = phyloGLM:::scaledLL,model=model,scale=scale,
                          threads=threads,lower = lb,upper = ub)
-    optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,rateModel=rateModel,scale=1)
+    optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,model=model,scale=1)
     counts=optMod$iter
   } else {
     stop("Invalid optimization method specified")
   }
-  setParams(rateModel,optMod$par,which(!rateModel@fixed)-1)
+  setParams(model,optMod$par,which(!model@fixed)-1)
   return(with(optMod,list(value=value,counts=counts,convergence=convergence,message=message,
                           par=optMod$par,hessian=optMod$hessian)))
 })
