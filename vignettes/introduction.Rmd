@@ -18,7 +18,7 @@ set.seed(123)
 ## Set some parameters for the simulation
 species=c("A","B","C","D","E")
 nAlleles=3
-nSites=5000
+nSites=1000
 
 ## Create test trees, both one that will fail, and one that will pass
 tree=ape::rtree(n = length(species),tip.label = species)
@@ -50,7 +50,10 @@ rateMod=rateModel(data = ad,rateFormula=rateFormula)
 Now we can fit the model:
 
 ```{r}
-fitted_status<-fit(obj = rateMod,threads=3)
+microbenchmark::microbenchmark(siteLL(model = rateMod,threads=1),
+                                    siteLL(model = rateMod,threads=2),
+                                    siteLL(model = rateMod,threads=3),times=10)
+fitted_status<-fit(model = rateMod,threads=3)
 ```
 
 Once fitted we can extract the parameters and their standard errors and plot them:
