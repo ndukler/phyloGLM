@@ -41,7 +41,7 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
  * Phylogenetic computations
  */ 
 
-// Compute rate for a branch with child at a given site
+// Compute rate for a branch with child at a given site, does not scale by branch length
 double phylogeny::rate(const int child,const std::vector<double>& siteX){
   // Initialize range vector 0 .. siteX.size()-1
   std::vector<int> grp(siteX.size());

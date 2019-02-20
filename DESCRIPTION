@@ -44,6 +44,7 @@ Collate:
     'marginal.R'
     'package.R'
     'plotParams.R'
+    'rates.R'
     'rcppModules.R'
     'readPAF.R'
     'scaledLL.R'
