@@ -1,3 +1,5 @@
+Meta
+doc
 inst/doc
 .Rproj.user
 \.Rhistory
@@ -5,9 +7,6 @@ inst/doc
 *.dll
 
 \.RData
-
 *.Rproj
-
 vignettes/log\.txt
-
 data
