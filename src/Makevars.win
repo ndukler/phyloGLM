@@ -12,3 +12,10 @@ CXX_STD = CXX11
 
 PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) -g -pthread
 PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+
+R_OBJS = \
+    lapack/blas_mod.o \
+    lapack/lapack.o 
+
+
+
