@@ -300,9 +300,9 @@ std::vector<double> phylogeny::siteLL(const SEXP dataPtr, const SEXP ratePtr,con
       end += extra;
     }
     // workers.push_back(std::thread(&phylogeny::test, this, std::ref(siteLik),start, end));
-    // chunkLL(std::ref(siteLik), std::ref(dataS), std::ref(rateXS), std::ref(piXS),start, end);
-    workers.push_back(std::thread(&phylogeny::chunkLL, this, std::ref(siteLik), std::ref(data),
-                                  std::ref(rateX), std::ref(piX),start, end));
+    chunkLL(std::ref(siteLik), std::ref(dataS), std::ref(rateXS), std::ref(piXS),start, end);
+    //workers.push_back(std::thread(&phylogeny::chunkLL, this, std::ref(siteLik), std::ref(data),
+                                  // std::ref(rateX), std::ref(piX),start, end));
     start = end;
     end = start + rows;
   }
