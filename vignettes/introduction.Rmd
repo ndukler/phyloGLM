@@ -50,9 +50,6 @@ rateMod=rateModel(data = ad,rateFormula=rateFormula)
 Now we can fit the model:
 
 ```{r}
-microbenchmark::microbenchmark(siteLL(model = rateMod,threads=1),
-                                    siteLL(model = rateMod,threads=2),
-                                    siteLL(model = rateMod,threads=3),times=10)
 fitted_status<-fit(model = rateMod,threads=3)
 ```
 

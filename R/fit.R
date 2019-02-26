@@ -17,11 +17,11 @@ methods::setGeneric("fit", function(model,scale=NULL,method=c("l-bfgs-b","mlsl",
 #' @examples
 #' 
 #' @export
-methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=NULL,method=c("l-bfgs-b","mlsl","stogo"),
+methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=-1,method=c("bfgs","mlsl","stogo"),
                                                                  threads=1,control=list(),log="log.txt") {
   ## scale defaults to -1/nsites
-  if(is.null(scale)){
-    scale=-1/getAlleleData(model)@data@nrow
+  if(!is.numeric(scale)){
+    stop("scale must be a numeric value")
   }
   ## Check method and set defaults
   if(length(method)>1){
@@ -38,7 +38,7 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=N
   ub=rep(10,length(getParams(model)))
   
   ## Set default control options
-  if(method %in% c("l-bfgs-b")){
+  if(method %in% c("bfgs")){
     cont = list(ndeps=rep(10^-6,sum(!model@fixed)))
   } else {
     cont = nloptr::nl.opts()
@@ -51,17 +51,17 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=N
   
   if(method=="l-bfgs-b"){
     sink(file=log)
-    optMod=ucminf::ucminf(par = getParams(model)[which(!model@fixed)],fn = scaledLL,model=model,scale=scale,
-                          threads=threads,hessian = TRUE)
+    optMod=optim(par = getParams(model)[which(!model@fixed)],fn = phyloGLM:::scaledLL,model=model,scale=scale,
+                          threads=threads,method="BFGS",hessian = TRUE)
     sink()
-    optMod$counts=optMod$info[4]
+    # optMod$counts=optMod$iter
     optMod$hessian=1/scale*optMod$hessian ## revert scaling on hessian
   } else if(method == "mlsl"){
     stop("Unimplemented optimization method specified")
     optMod=nloptr::mlsl(x0=getParams(model)[which(!model@fixed)],fn = phyloGLM:::scaledLL,model=model,scale=scale,
                         threads=threads,control = cont,lower = lb,upper = ub)
     optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,model=model,scale=1)
-    counts=optMod$iter
+    optMod$counts=optMod$iter
   } else if(method == "stogo"){
     stop("Unimplemented optimization method specified")
     optMod=nloptr::stogo(x0=getParams(model)[which(!model@fixed)],fn = phyloGLM:::scaledLL,model=model,scale=scale,
