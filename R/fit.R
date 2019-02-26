@@ -34,8 +34,8 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=-
   ## Where the parameter values are fixed, set lb=ub=value
   ## ub[model@fixed]=x[model@fixed]
   ## lb[model@fixed]=x[model@fixed]
-  lb=rep(-10,length(getParams(model)))
-  ub=rep(10,length(getParams(model)))
+  lb=rep(-5,length(getParams(model)))
+  ub=rep(5,length(getParams(model)))
   
   ## Set default control options
   if(method %in% c("bfgs")){
@@ -51,7 +51,7 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=-
   
   if(method=="l-bfgs-b"){
     sink(file=log)
-    optMod=optim(par = getParams(model)[which(!model@fixed)],fn = phyloGLM:::scaledLL,model=model,scale=scale,
+    optMod=optim(par = getParams(model)[which(!model@fixed)],fn = scaledLL,model=model,scale=scale,
                           threads=threads,method="BFGS",hessian = FALSE)
     sink()
     # optMod$counts=optMod$iter
@@ -63,7 +63,6 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=-
     optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,model=model,scale=1)
     optMod$counts=optMod$iter
   } else if(method == "stogo"){
-    stop("Unimplemented optimization method specified")
     optMod=nloptr::stogo(x0=getParams(model)[which(!model@fixed)],fn = phyloGLM:::scaledLL,model=model,scale=scale,
                          threads=threads,lower = lb,upper = ub)
     optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,model=model,scale=1)
