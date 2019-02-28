@@ -51,11 +51,11 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=-
   
   if(method=="l-bfgs-b"){
     sink(file=log)
-    optMod=optim(par = getParams(model)[which(!model@fixed)],fn = scaledLL,model=model,scale=scale,
+    optMod=optim(par = getParams(model)[which(!model@fixed)],fn = scaledLL,gr = phyloGrad,model=model,scale=scale,
                           threads=threads,method="BFGS",hessian = FALSE)
     sink()
     # optMod$counts=optMod$iter
-    optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,model=model,scale=1)
+    optMod$hessian=numDeriv::hessian(func = ll,x=optMod$par,model=model)
   } else if(method == "mlsl"){
     stop("Unimplemented optimization method specified")
     optMod=nloptr::mlsl(x0=getParams(model)[which(!model@fixed)],fn = phyloGLM:::scaledLL,model=model,scale=scale,

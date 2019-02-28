@@ -43,6 +43,7 @@ Collate:
     'getTree.R'
     'marginal.R'
     'package.R'
+    'phyloGrad.R'
     'pi.R'
     'plotParams.R'
     'rates.R'
