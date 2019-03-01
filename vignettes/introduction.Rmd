@@ -55,8 +55,7 @@ m=microbenchmark::microbenchmark(ll(model = rateMod,threads = 1),
 m=as.data.frame(m)
 ggplot(m,aes(x=factor(as.numeric(m$expr)),y=time/10^6))+
   geom_boxplot()+
-  theme(axis.text.x = element_text(angle = 45,hjust=1))+
-  ylab("Time (ms)")+
+  ylab("Time for log-likelihood evaluation (ms)")+
   xlab("Threads")+
   ylim(0,max(m$time/10^6))
 ```
