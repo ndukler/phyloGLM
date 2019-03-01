@@ -13,12 +13,13 @@ First create some data and a tree. Pretend that sites are split into two classes
 
 ```{r}
 library(phyloGLM)
+library(cowplot)
 ## Set seed for consistency
 set.seed(123)
 ## Set some parameters for the simulation
 species=c("A","B","C","D","E")
 nAlleles=3
-nSites=1000
+nSites=5000
 
 ## Create test trees, both one that will fail, and one that will pass
 tree=ape::rtree(n = length(species),tip.label = species)
@@ -45,6 +46,19 @@ Now create a rate model specifying that genomic regions should be seperated by b
 
 ```{r}
 rateMod=rateModel(data = ad,rateFormula=rateFormula)
+```
+Note that the likelihood calculations in this package scale well when parallelized up to one or two less than the number of available threads on your system.
+```{r}
+m=microbenchmark::microbenchmark(ll(model = rateMod,threads = 1),
+                               ll(model = rateMod,threads = 2),
+                               ll(model = rateMod,threads = 3))
+m=as.data.frame(m)
+ggplot(m,aes(x=factor(as.numeric(m$expr)),y=time/10^6))+
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 45,hjust=1))+
+  ylab("Time (ms)")+
+  xlab("Threads")+
+  ylim(0,max(m$time/10^6))
 ```
 
 Now we can fit the model:

@@ -46,7 +46,7 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   }
   ## If piFormula is NULL set equal to rateFormula
   if(is.null(piFormula)){
-    write("piFormula is not specified, using same formula as rateFormula...",file = stdout())
+    warning("piFormula is not specified, using same formula as rateFormula...")
     piFormula=rateFormula
   }
   ## Check that all coavariates specified in rateFormula are contained in siteInfo
