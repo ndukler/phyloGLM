@@ -66,7 +66,7 @@ Now we can fit the model:
 fitted_status<-fit(model = rateMod,threads=3)
 ```
 
-Once fitted we can extract the parameters and their standard errors and plot them:
+Once fitted we can extract the parameters and their approximate standard errors and plot them:
 
 ```{r}
 seTab=se(rateMod,fitted_status$hessian)
@@ -75,5 +75,15 @@ plotParams(seTab)
 We can also compute the posterior allelic probabilties accross all nodes
 ```{r}
 m=marginal(rateMod)
+```
+To get explicit p-values for specific parameters we can use the likelihood ratio test (since estimating the standard error via the hessian may not be reliable). To do that we must fit two models, one with, and one without the parameter of interest. Note how we are careful to set the formulas for the rate and stationary distributions seperately to ensure that the models differ by only one parameter.
+
+```{r}
+nullFormula = formula(~cre.class+logXpress+0)
+alternateFormula = formula(~cre.class+0)
+rateModNull=rateModel(data = ad,rateFormula=nullFormula,piFormula = nnullFormula)
+rateModAlternate=rateModel(data = ad,rateFormula=alternateFormula,piFormula = nullFormula)
+
+
 ```
 
