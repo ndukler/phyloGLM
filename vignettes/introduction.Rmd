@@ -19,7 +19,7 @@ set.seed(123)
 ## Set some parameters for the simulation
 species=c("A","B","C","D","E")
 nAlleles=3
-nSites=5000
+nSites=1000
 
 ## Create test trees, both one that will fail, and one that will pass
 tree=ape::rtree(n = length(species),tip.label = species)
@@ -76,14 +76,18 @@ We can also compute the posterior allelic probabilties accross all nodes
 ```{r}
 m=marginal(rateMod)
 ```
-To get explicit p-values for specific parameters we can use the likelihood ratio test (since estimating the standard error via the hessian may not be reliable). To do that we must fit two models, one with, and one without the parameter of interest. Note how we are careful to set the formulas for the rate and stationary distributions seperately to ensure that the models differ by only one parameter.
+To get explicit p-values for specific parameters we can use the likelihood ratio test (since estimating the standard error via the hessian may not be reliable). To do that we must fit two models, one with (alternate model), and one without (null model) the parameter of interest (in this case the alternate model is the model we previously fit). Note how we are careful to set the formulas for the rate and stationary distributions seperately to ensure that the models differ by only one parameter. The models must also be nested in order for this test to be valid. A small p-value rejects the null model, concluding that the more complex model fits the data better, even given the additional degrees of freedom.
 
 ```{r}
-nullFormula = formula(~cre.class+logXpress+0)
-alternateFormula = formula(~cre.class+0)
-rateModNull=rateModel(data = ad,rateFormula=nullFormula,piFormula = nnullFormula)
-rateModAlternate=rateModel(data = ad,rateFormula=alternateFormula,piFormula = nullFormula)
+nullFormula = formula(~cre.class+0)
+alternateFormula = formula(~cre.class+logXpress+0)
+rateModNull=rateModel(data = ad,rateFormula=nullFormula,piFormula = alternateFormula)
+fitted_status_alternate=fit(rateModNull,threads = 3)
+lrt_expression=lrt(h0 = rateModNull,hA = rateMod)
+```
+Models may also be compared usng the baysian information criterion (BIC) which does not require that the models be nested. The lower the BIC the better the model, in other words if BIC(alternate) < BIC(null), we can conclude that the alternate model provides a better fit to the data. In this case we perform BIC(alternate)-BIC(NULL), see a large negative value, and conclude that the alternate model is better.  
 
-
+```{r}
+bic(rateMod)-bic(rateModNull)
 ```
 
