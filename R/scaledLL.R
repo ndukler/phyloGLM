@@ -17,9 +17,15 @@ methods::setGeneric("scaledLL", function(x,model,scale=1,threads=1,...) {
 #' @name scaledLL
 #' @rdname scaledLL
 methods::setMethod("scaledLL", signature(x="missing",model = "rateModel"), function(x,model,scale=1,threads=1) {
-  return(model@phylogeny$ll(model@alleleData$alleleData@data@x,
-                              model@rateDM@x,
-                              model@piDM@x,scale,threads))
+  l=model@phylogeny$ll(model@alleleData$alleleData@data@x,
+                       model@rateDM@x,
+                       model@piDM@x,scale,threads)
+  if(is.nan(l)){
+    warning("NaN value for LL with parameters: ",paste(getParams(model),collapse = ","))
+  } else if (is.infinite(ll)){
+    warning("Inf value for LL with parameters: ",paste(getParams(model),collapse = ","))
+  }
+  return(l)
 })
 
 #' @name scaledLL
@@ -29,14 +35,7 @@ methods::setMethod("scaledLL", signature(x="numeric",model = "rateModel"), funct
   initP=getParams(model)
   setParams(model,x,which(!model@fixed)-1)
   ## Evaluate LL
-  l=model@phylogeny$ll(model@alleleData$alleleData@data@x,
-                       model@rateDM@x,
-                       model@piDM@x,scale,threads)
-  if(is.nan(ll)){
-    warning("NaN value for LL with parameters: ",paste(getParams(model),collapse = ","))
-  } else if (is.infinite(ll)){
-    warning("Inf value for LL with parameters: ",paste(getParams(model),collapse = ","))
-  }
+  l=scaledLL(model=model,scale=scale,threads=threads)
   ## Restore original parameter values
   setParams(model,initP,(1:length(initP))-1)
   return(l)
