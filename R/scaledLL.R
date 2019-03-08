@@ -25,10 +25,21 @@ methods::setMethod("scaledLL", signature(x="missing",model = "rateModel"), funct
 #' @name scaledLL
 #' @rdname scaledLL
 methods::setMethod("scaledLL", signature(x="numeric",model = "rateModel"), function(x,model,scale=1,threads=1) {
+  ## Save initial parameter values
+  initP=getParams(model)
   setParams(model,x,which(!model@fixed)-1)
-  return(model@phylogeny$ll(model@alleleData$alleleData@data@x,
-                          model@rateDM@x,
-                          model@piDM@x,scale,threads))
+  ## Evaluate LL
+  l=model@phylogeny$ll(model@alleleData$alleleData@data@x,
+                       model@rateDM@x,
+                       model@piDM@x,scale,threads)
+  if(is.nan(ll)){
+    warning("NaN value for LL with parameters: ",paste(getParams(model),collapse = ","))
+  } else if (is.infinite(ll)){
+    warning("Inf value for LL with parameters: ",paste(getParams(model),collapse = ","))
+  }
+  ## Restore original parameter values
+  setParams(model,initP,(1:length(initP))-1)
+  return(l)
 })
 
 #' Compute log-likelihood
@@ -50,16 +61,11 @@ methods::setGeneric("ll", function(x,model,threads=1,...) {
 #' @name ll
 #' @rdname ll
 methods::setMethod("ll", signature(x="missing",model = "rateModel"), function(x,model,threads=1) {
-  return(model@phylogeny$ll(model@alleleData$alleleData@data@x,
-                            model@rateDM@x,
-                            model@piDM@x,1,threads))
+  return(scaledLL(model=model,scale=1,threads=threads))
 })
 
 #' @name ll
 #' @rdname ll
 methods::setMethod("ll", signature(x="numeric",model = "rateModel"), function(x,model,threads=1) {
-  setParams(model,x,which(!model@fixed)-1)
-  return(model@phylogeny$ll(model@alleleData$alleleData@data@x,
-                            model@rateDM@x,
-                            model@piDM@x,1,threads))
+  return(scaledLL(x=x,model=model,scale=1,threads=threads))
 })

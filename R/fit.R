@@ -54,23 +54,25 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=-
     optMod=optim(par = getParams(model)[which(!model@fixed)],fn = scaledLL,gr = phyloGrad,model=model,scale=scale,
                           threads=threads,method="BFGS",hessian = FALSE)
     sink()
+    setParams(model,optMod$par,which(!model@fixed)-1)
     # optMod$counts=optMod$iter
     optMod$hessian=numDeriv::hessian(func = ll,x=optMod$par,model=model)
   } else if(method == "mlsl"){
     stop("Unimplemented optimization method specified")
     optMod=nloptr::mlsl(x0=getParams(model)[which(!model@fixed)],fn = phyloGLM:::scaledLL,model=model,scale=scale,
                         threads=threads,control = cont,lower = lb,upper = ub)
+    setParams(model,optMod$par,which(!model@fixed)-1)
     optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,model=model,scale=1)
     optMod$counts=optMod$iter
   } else if(method == "stogo"){
     optMod=nloptr::stogo(x0=getParams(model)[which(!model@fixed)],fn = phyloGLM:::scaledLL,model=model,scale=scale,
                          threads=threads,lower = lb,upper = ub)
+    setParams(model,optMod$par,which(!model@fixed)-1)
     optMod$hessian=numDeriv::hessian(func = scaledLL,x=optMod$par,model=model,scale=1)
     counts=optMod$iter
   } else {
     stop("Invalid optimization method specified")
   }
-  setParams(model,optMod$par,which(!model@fixed)-1)
   return(with(optMod,list(value=value,counts=counts,convergence=convergence,message=message,
                           par=optMod$par,hessian=optMod$hessian)))
 })

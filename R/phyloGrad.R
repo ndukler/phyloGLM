@@ -45,9 +45,8 @@ methods::setMethod("phyloGrad", signature(x="missing",model = "rateModel"), func
   #   setParams(model,x[p],p-1)
   # }
   # ## Compute Gradients
-  # g=(f_plus-f_minus)/h_real
-  g=numDeriv::jacobian(func = phyloGLM:::scaledLL,method="simple",x=getParams(model),
-                       model=model,scale=scale,threads=threads)
+  # g=(f_plus-f_minus)/h_reals
+  g=numDeriv::jacobian(func = phyloGLM:::scaledLL,method="simple",x=getParams(model),model=model,scale=scale,threads=threads)
   return(g)
 })
 
