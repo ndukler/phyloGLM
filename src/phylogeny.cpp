@@ -70,12 +70,12 @@ arma::vec phylogeny::pi(const std::vector<double>& piV){
     std::iota(col.begin(), col.end(), 0);
     // Get parameter indicies
     std::vector<int> parInd = piIndex.getIndex(std::vector<int>(1,i-1),col,true);
-    double temp=0; // accumulator value for exponenetial
+    double temp=0; // accumulator value for -z in e^(-z)
     for(unsigned int j=0;j<parInd.size();j++){
-      temp+=params[parInd[j]]*piV[j];
+      temp-=params[parInd[j]]*piV[j];
     }
     //Rcpp::Rcout << "temp: " << temp << std::endl;
-    p(i)=std::exp(-temp);
+    p(i)=std::exp(temp);
     //Rcpp::Rcout << "pi(i): " << p(i) << std::endl;
   }
   // Compute sum of partition function
