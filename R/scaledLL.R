@@ -22,7 +22,7 @@ methods::setMethod("scaledLL", signature(x="missing",model = "rateModel"), funct
                        model@piDM@x,scale,threads)
   if(is.nan(l)){
     warning("NaN value for LL with parameters: ",paste(getParams(model),collapse = ","))
-  } else if (is.infinite(ll)){
+  } else if (is.infinite(l)){
     warning("Inf value for LL with parameters: ",paste(getParams(model),collapse = ","))
   }
   return(l)
