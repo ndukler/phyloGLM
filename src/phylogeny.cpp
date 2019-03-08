@@ -6,10 +6,9 @@
 #include "expokit.h"
 #include <thread>
 #include <RcppArmadillo.h>
-#include <mutex>
+#include <cmath> 
 using namespace Rcpp;
 
-// std::mutex mu;
 
 phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFrame pDF,
                      Rcpp::IntegerVector eGroup, Rcpp::List treeInfo) : 
@@ -320,6 +319,15 @@ double phylogeny::ll(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr, do
   for (auto& n : sLL)
     LL += n;
   LL=LL*scale;
+  if(std::isnan(LL)){
+    std::vector<std::string> stringVector(params.size());
+    // Convert parameters to string
+    std::string pString;
+    for (auto const& s : params) { 
+      pString += std::to_string(s) + ", ";
+    }
+    Rcpp::warning("LL is NaN at"+pString);
+  }
   return(LL);
 }
 
