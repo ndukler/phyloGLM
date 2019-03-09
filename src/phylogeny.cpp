@@ -33,6 +33,9 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
   nTips = as<int>(treeInfo[2]);
   nNode = edges.size()+1;
   root=edges[edges.size()-1][0]; // Get the index of the root node
+  // Set rate min/max
+  rMax = 5; // max rate
+  rMin = 0.001; // min rate
 }
 
 /*
@@ -53,14 +56,18 @@ double phylogeny::rate(const int child,const std::vector<double>& siteX){
   for(unsigned int i=0; i< parInd.size();i++){
     r+= params[parInd[i]]*siteX[i];  
   }
-  return(std::exp(r));
+  // Guarentee positive r between 0 and 1
+  r=1.0/(1.0+std::exp(-r));
+  // // Parameterize rate as a mixture distribution
+  double rFinal= (r)*rMin + (1.0-r)*rMax;
+  return(rFinal);
 }
 
 // Compute allele stationary distribution for a given site design matrix  
 arma::vec phylogeny::pi(const std::vector<double>& piV){
   arma::vec p(nAlleles);
-  // Set as e^0
-  p(0)=1;
+  // Set as log(1)
+  p(0)=0;
   // Compute the numerators of the softmax function 
   for(int i=1; i < nAlleles; i++){
     // Rcpp::Rcout << "Calc pi for allele: " << i << std::endl;
@@ -75,13 +82,31 @@ arma::vec phylogeny::pi(const std::vector<double>& piV){
       temp-=params[parInd[j]]*piV[j];
     }
     //Rcpp::Rcout << "temp: " << temp << std::endl;
-    p(i)=std::exp(temp);
+    p(i)=temp;
     //Rcpp::Rcout << "pi(i): " << p(i) << std::endl;
   }
+  // // subtract off the max to prevent overflow
+  p=p-arma::max(p);
+  p=arma::exp(p);
   // Compute sum of partition function
   double Z = arma::sum(p);
   // Create normalized pi vector
-  return(p/Z);
+  arma::vec pPrime = p/Z;
+  // Check if any of the values too small, and if so replace them
+  bool renorm = false;
+  for(int i=0; i < nAlleles; i++)
+  {
+    if(pPrime(i)<=exp(-10)){
+      renorm=true;
+      pPrime(i)=exp(-10);
+    }
+  }
+  // Renormalize vector if necessary
+  if(renorm){
+    double zPrime=sum(pPrime);
+    pPrime=pPrime/zPrime;
+  }
+  return(pPrime);
 }
 
 // Note that the rows are the parent allele and the columns are the child allele

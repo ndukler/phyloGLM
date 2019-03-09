@@ -98,7 +98,10 @@ simulateSites <- function(tr,covariateTable,rateFormula,rateParams=NULL,piFormul
   ## Create rate parameter matrix where col = branch parameters and row = coefficients
   branchRateParams=apply(tr$edge, 1, function(x) rateParams[lineageTable[child==x[2]]$edgeGroup,])
   ## Compute the rate for all sites
-  branchRateAll=exp(rateFeatureTable %*% branchRateParams)
+  rateMin=10^-4
+  rateMax=5
+  branchRateMix=1/(1+exp(-rateFeatureTable %*% branchRateParams))
+  branchRateAll=(branchRateMix*rateMin)+((1-branchRateMix)*rateMax)
 
   ## Create matrix to hold simulated data
   simDat=matrix(nrow = nSites,ncol=length(tr$tip.label))

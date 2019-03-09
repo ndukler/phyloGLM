@@ -16,6 +16,8 @@ private:
   std::vector<std::vector<int>> edges; // Matrix of edges with columns parent,child
   std::vector<std::vector<int>> siblings; // Matrix of edges with columns parent,child
   std::vector<double> edgeLength; // Length of edges, indexed by the id# of the child
+  double rMax = 5; // max rate
+  double rMin = 0.001; // min rate
   int nAlleles; // Number of alleles
   int nTips; // Number of tips on the tree
   int nNode; // Number of nodes on the tree
