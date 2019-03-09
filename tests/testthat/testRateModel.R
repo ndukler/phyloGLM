@@ -21,6 +21,10 @@ ad=alleleData(data=aData,tree=tree,siteInfo = siteInfo)
 et=getEdgeTable(ad)
 et[,edgeGroup:=c(0,1,2)]
 
+sigmoid <- function(z){
+  1/(1+exp(-z))
+}
+
 ##### Begin Tests ######
 ## -------------------------------------------------------------------------- ##
 ## construct rateModel 
@@ -40,14 +44,21 @@ if(exists('rateMod')){
                         getParams(rateMod)[7:9]
                       },c(0.1,0.2,0.3)))
   ## Test that correct rate calculations are performed for each group
+  rMax = 5; ## max rate
+  rMin = 0.001; ## min rate
+  rMix0=sigmoid(sum(rateMod@rateDM[1,]))
+  rMix1=sigmoid(sum(rateMod@rateDM[1,]))
+  rMix2=sigmoid(sum(c(0.1,0.2,0.3)*rateMod@rateDM[1,]))
+  tr0=rMix0*rMin+(1-rMix0)*rMax
+  tr1=rMix1*rMin+(1-rMix1)*rMax
+  tr2=rMix2*rMin+(1-rMix2)*rMax
   testthat::test_that("Branch specific rate calculations",
                       testthat::expect_equal({
                         r0=rateMod@phylogeny$rate(0,rateMod@rateDM[1,])
                         r1=rateMod@phylogeny$rate(1,rateMod@rateDM[1,])
                         r2=rateMod@phylogeny$rate(2,rateMod@rateDM[1,])
                         c(r0,r1,r2)},
-                        c(exp(sum(rateMod@rateDM[1,])),exp(sum(rateMod@rateDM[1,])),
-                          exp(sum(c(0.1,0.2,0.3)*rateMod@rateDM[1,])))))
+                        c(tr0,tr1,tr2)))
   
   ## Check that the stationary distribution, pi is computed correctly
   Z=c(1,exp(-sum(rateMod@piDM[1,])))

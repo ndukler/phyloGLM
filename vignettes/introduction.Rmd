@@ -30,7 +30,7 @@ siteLabels=data.frame(cre.class=factor(rep(c("Enhancer","Promoter"),times=c(3/4*
 ## Set the rate parameter formula
 rateFormula = formula(~cre.class+logXpress+0)
 ## Set parameter values
-rateParams=matrix(c(-0.1,-0.4,-0.3),nrow=1)
+rateParams=matrix(c(-1,-4.5,-3.3),nrow=1)
 piParams=matrix(c(0.3,0.1,0,0,-0.1,0.5),nrow=2,ncol=3,byrow = T)
 ## Simulate data
 aData=simulateSites(tr=tree,covariateTable = siteLabels,rateFormula = rateFormula, rateParams = rateParams,
@@ -63,7 +63,7 @@ ggplot(m,aes(x=factor(as.numeric(m$expr)),y=time/10^6))+
 Now we can fit the model:
 
 ```{r}
-fitted_status<-fit(model = rateMod,threads=3)
+fitted_status<-fit(model = rateMod,threads=8)
 ```
 
 Once fitted we can extract the parameters and their approximate standard errors and plot them:
