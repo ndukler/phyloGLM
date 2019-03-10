@@ -51,10 +51,14 @@ public:
   double ll(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr, double scale,
                        const unsigned int threads);
   std::vector<std::vector<std::vector<double>>> marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads);
+  // Getters
   Rcpp::DataFrame getRateIndex();
   Rcpp::DataFrame getPiIndex();
   std::vector<double> getParams();
+  std::vector<double> getRateBounds();
+  // Setters
   void setParams(Rcpp::NumericVector x, Rcpp::IntegerVector index);
+  void setRateBounds(double mn, double mx);
   // Functions for test suite purposes only
   Rcpp::ListOf<std::vector<std::vector<double>>> testMsgPassing(SEXP dataPtr, SEXP ratePtr, SEXP piPtr);
 };

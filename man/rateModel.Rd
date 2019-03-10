@@ -4,7 +4,8 @@
 \alias{rateModel}
 \title{rateModel}
 \usage{
-rateModel(data, rateFormula, piFormula = NULL, lineageTable = NULL)
+rateModel(data, rateFormula, piFormula = NULL, lineageTable = NULL,
+  rateBounds = c(10^-3, 5))
 }
 \arguments{
 \item{data}{An alleleData object}

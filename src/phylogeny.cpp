@@ -363,6 +363,16 @@ std::vector<double> phylogeny::getParams(){
   return(params);
 }
 
+std::vector<double> phylogeny::getRateBounds(){
+  std::vector<double> v = {rMin,rMax};
+  return(v);
+}
+
+void phylogeny::setRateBounds(double mn, double mx){
+  rMin=mn;
+  rMax=mx;
+}
+
 void phylogeny::setParams(const Rcpp::NumericVector x, const Rcpp::IntegerVector index){
   if(x.size()!=index.size()){
     Rcpp::stop("Error when setting parameter vector: vector length mismatch");
@@ -403,6 +413,8 @@ RCPP_MODULE(phylogeny) {
   .method("marginal", &phylogeny::marginal)
   .method("getParams", &phylogeny::getParams)
   .method("setParams", &phylogeny::setParams)
+  .method("getRateBounds", &phylogeny::getRateBounds)
+  .method("setRateBounds", &phylogeny::setRateBounds)
   .method("testMsgPassing", &phylogeny::testMsgPassing)
   ;
 }

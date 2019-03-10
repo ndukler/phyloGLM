@@ -49,6 +49,7 @@ Collate:
     'phyloHess.R'
     'pi.R'
     'plotParams.R'
+    'rateBounds.R'
     'rates.R'
     'rcppModules.R'
     'readPAF.R'
