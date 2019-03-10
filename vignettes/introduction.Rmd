@@ -45,7 +45,7 @@ ad=alleleData(data=aData$data,tree=tree,siteInfo = siteLabels)
 Now create a rate model specifying that genomic regions should be seperated by both cre.class and go.class.
 
 ```{r}
-rateMod=rateModel(data = ad,rateFormula=rateFormula)
+rateMod=rateModel(data = ad,rateFormula=rateFormula,rateBounds = c(10^-5,100))
 ```
 Note that the likelihood calculations in this package scale well when parallelized up to one or two less than the number of available threads on your system.
 ```{r}

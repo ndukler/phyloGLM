@@ -161,7 +161,7 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL,rateBoun
   fixed=logical(length(params))
   
   ## Construct hyper-parameter list
-  hyper=list(rateBounds=c(10^-3,5))
+  hyper=list(rateBounds=rateBounds)
   
   ## ** Object construction ** ##
   methods::new("rateModel",alleleData=adEnviron,edgeGroups=lineageTable,rateFormula=rateFormula,
