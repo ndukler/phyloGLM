@@ -160,11 +160,14 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL,rateBoun
   ## Set fixed vector to default to FALSE
   fixed=logical(length(params))
   
+  ## Construct hyper-parameter list
+  hyper=list(rateBounds=c(10^-3,5))
+  
   ## ** Object construction ** ##
   methods::new("rateModel",alleleData=adEnviron,edgeGroups=lineageTable,rateFormula=rateFormula,
                piFormula=piFormula,rateDM=stlMatrix(rateDM),piDM=stlMatrix(piDM),
                phylogeny=new(phyloGLM:::phylogeny,params,data.frame(rateP$group,
                     rateP$column,colnames(rateDM)[rateP$column+1]),
-                    data.frame(piP$group,piP$col,colnames(piDM)[piP$column+1]),eG,treeInfo),
+                    data.frame(piP$group,piP$col,colnames(piDM)[piP$column+1]),eG,treeInfo,hyper),
                fixed=fixed)
 }

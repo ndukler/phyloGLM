@@ -10,7 +10,7 @@ using namespace Rcpp;
 
 
 phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFrame pDF,
-                     Rcpp::IntegerVector eGroup, Rcpp::List treeInfo) : 
+                     Rcpp::IntegerVector eGroup, Rcpp::List treeInfo,Rcpp::List hyper) : 
                      rateIndex(rDF[0],rDF[1],rDF[2],0),piIndex(pDF[0],pDF[1],pDF[2],rDF.nrow()),
                      edges(Rcpp::as<IntegerMatrix>(treeInfo[0]).nrow(), std::vector<int>(2,0)),
                      siblings(Rcpp::as<Rcpp::ListOf<Rcpp::IntegerVector>>(treeInfo[3]).size()){
@@ -34,8 +34,9 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
   nNode = edges.size()+1;
   root=edges[edges.size()-1][0]; // Get the index of the root node
   // Set rate min/max
-  rMax = 5; // max rate
-  rMin = 0.001; // min rate
+  Rcpp::NumericVector rateBounds=Rcpp::as<Rcpp::NumericVector>(hyper[0]);
+  rMin = rateBounds(0); // min rate
+  rMax = rateBounds(1); // max rate
 }
 
 /*
@@ -391,7 +392,7 @@ Rcpp::ListOf<std::vector<std::vector<double>>> phylogeny::testMsgPassing(SEXP da
 
 RCPP_MODULE(phylogeny) {
   class_<phylogeny>( "phylogeny" )
-  .constructor<Rcpp::NumericVector, Rcpp::DataFrame, Rcpp::DataFrame, Rcpp::IntegerVector,Rcpp::List>()
+  .constructor<Rcpp::NumericVector, Rcpp::DataFrame, Rcpp::DataFrame, Rcpp::IntegerVector,Rcpp::List,Rcpp::List>()
   .method("rate", &phylogeny::rate)
   .method("pi", &phylogeny::pi)
   .method("rateMatrix",&phylogeny::rateMatrix)
