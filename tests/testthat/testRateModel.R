@@ -31,6 +31,8 @@ sigmoid <- function(z){
 testthat::context("rateModel object can be constructed")
 testthat::expect_s4_class({suppressWarnings(rateMod<-rateModel(data = ad,rateFormula = rateFormula,lineageTable = et))},class = "rateModel")
 
+setParams(rateMod,rep(0,12),0:11)
+
 ## If rate model object was not constructed don't trigger any further tests
 if(exists('rateMod')){
   testthat::context("rateModel object getter/setter functions")

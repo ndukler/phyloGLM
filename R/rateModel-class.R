@@ -34,7 +34,7 @@ methods::setClass("rateModel", slots=c(alleleData = "environment",edgeGroups="da
 #' @examples
 #'
 #' @export
-rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
+rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL,rateBounds=c(10^-3,5)){
   ## ** Validity checks and default setting** ##
   ## Check that data is of class alleleData
   if(class(data)!="alleleData"){
@@ -84,6 +84,15 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
     lineageTable[,edgeGroup:=0]
   }
   
+  ## Check that rate bounds are valid
+  if(!length(rateBounds)==2 || !is.numeric(rateBounds)){
+    stop("rateBounds must be a numeric vector of length 2")
+  } else if (!all(is.finite(rateBounds)) || any(rateBounds<=0)){
+    stop("rateBounds must be finite and greater than 0")
+  } else if (! rateBounds[1] < rateBounds[2]){
+    stop("rateBounds[2] must be less than rateBounds[2]")
+  }
+  
   ## ** Intermediate reformating and computation ** ##
   ## Create environment to hold parameter values and associated indices, etc.
   adEnviron=base::new.env()
@@ -106,8 +115,35 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL){
   rateP=expand.grid(group=unique(lineageTable$edgeGroup),column=1:ncol(rateDM)-1,
                     stringsAsFactors = FALSE)
   piP=expand.grid(group=2:data@nAlleles-2,column=1:ncol(piDM)-1,stringsAsFactors = FALSE)
+
+  ## Do calculations so that parameters ar initialized to values that would give an
+  ## expectation of 1 event per site. If that is not possible with the given rateMin
+  ## rateMax values throw a warning
+  totalBranchLength=sum(getTree(data)$edge.length)
+  eRate=1/totalBranchLength ## target expected rate
+  if(eRate < rateBounds[1]){
+    warning("Target initial expected rate of ",scales::scientific(eRate, digits = 3),
+            " (1 mut/site) below minimum possible rate. Adjusting target rate. Suggest lowering lower rate bound.")
+    eRate= 0.9*rateBounds[1]+0.9*rateBounds[2]
+  } else if (eRate > rateBounds[2]) {
+    warning("Target initial expected rate of ",scales::scientific(eRate, digits = 3),
+            " (1 mut/site) above max possible rate. Adjusting target rate. Suggest increasing upper rate bound.")
+    eRate= 0.1*rateBounds[1]+0.9*rateBounds[2]
+  }
+  w1=(eRate-rateBounds[2])/(rateBounds[1]-rateBounds[2]) ## Computes required weight from sigmoid
+  eLinear = -log((1/w1)-1) ## value that beta_1*x_1 + ... + beta_n*x_n must equal
+  ## Compute appropriate starting coefficients for each covariate by finding the betas that 
+  ## minimize the distance between the predicted expected rate (indirectly) per site with
+  ## no intercept allowed
+  modForm=as.formula(paste0(c("y",as.character(rateFormula),"+0"),collapse = ""))
+  fitCoef=lm(formula =modForm, data = data.table::data.table(y=eLinear,getSiteInfo(data)))
+  ## Set vector of inital params with intercept, if there is one, set to zero
+  initCoef=rep(0,length(colnames(rateDM)))
+  initCoef[colnames(rateDM)!="(Intercept)"]=coef(fitCoef)
+
   ## Create parameter vector
-  params=rep(0,nrow(rateP)+nrow(piP))
+  params=c(rep(initCoef,length.out=nrow(rateP)),rep(0,nrow(piP)))
+
   ## Create vector of edge lengths that are indexed by the child id #  
   eL = rep(-1,max(getTree(data)$edge[,2]))
   eL[getTree(data)$edge[,2]] = getTree(data)$edge.length

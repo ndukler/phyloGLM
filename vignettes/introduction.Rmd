@@ -63,10 +63,10 @@ ggplot(m,aes(x=factor(as.numeric(m$expr)),y=time/10^6))+
 Now we can fit the model:
 
 ```{r}
-fitted_status<-fit(model = rateMod,threads=8)
+fitted_status<-fit(model = rateMod,threads=3)
 ```
 
-Once fitted we can extract the parameters and their approximate standard errors and plot them:
+Once fitted we can extract the parameters, their approximate standard errors and plot them:
 
 ```{r}
 seTab=se(rateMod,fitted_status$hessian)
