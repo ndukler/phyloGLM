@@ -90,7 +90,7 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL,rateBoun
   } else if (!all(is.finite(rateBounds)) || any(rateBounds<=0)){
     stop("rateBounds must be finite and greater than 0")
   } else if (! rateBounds[1] < rateBounds[2]){
-    stop("rateBounds[2] must be less than rateBounds[2]")
+    stop("rateBounds[1] must be less than rateBounds[2]")
   }
   
   ## ** Intermediate reformating and computation ** ##
