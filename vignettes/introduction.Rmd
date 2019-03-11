@@ -14,6 +14,7 @@ First create some data and a tree. Pretend that sites are split into two classes
 ```{r}
 library(phyloGLM)
 library(cowplot)
+library(scales)
 ## Set seed for consistency
 set.seed(123)
 ## Set some parameters for the simulation
@@ -72,6 +73,21 @@ Once fitted we can extract the parameters, their approximate standard errors and
 seTab=se(rateMod,fitted_status$hessian)
 plotParams(seTab)
 ```
+If we want to see the distribution of rates for specific covariate values we can compute the rates at desired sites for all edgeGroups and plot them.
+```{r}
+## Compute the rate distribution
+rDist=rates(rateMod)
+## Extract the site information
+si=getSiteInfo(rateMod)
+si[,site:=1:nrow(.SD)]
+## Merge the rates and the site information
+rMerged=merge(si,rDist,by="site")
+## Plot rate dsitribution, split by enhancers and promoters
+ggplot(rMerged,aes(x=cre.class,y=rate,fill=factor(edgeGroup)))+
+  geom_boxplot(notch = TRUE)+
+  scale_y_log10(labels = trans_format(log10,math_format()))
+```
+
 We can also compute the posterior allelic probabilties accross all nodes
 ```{r}
 m=marginal(rateMod)

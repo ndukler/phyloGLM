@@ -65,13 +65,14 @@ double phylogeny::rate(const int child,const std::vector<double>& siteX){
 }
 
 // Overloaded function for computing rates, can take many sites
-std::vector<double> phylogeny::rate(const int child,std::vector<double> sites,const SEXP ratePtr){
+std::vector<double> phylogeny::rateV(const int child,std::vector<double> sites,const SEXP ratePtr){
   XPtr<std::vector<std::vector<double>>> r(ratePtr);
   std::vector<std::vector<double>> rateX = *r;
   std::vector <double> out(sites.size()); 
-  for(int i=0;i<sites.size();i++){
+  for(unsigned int i=0;i<sites.size();i++){
     out[i]=rate(child,rateX[sites[i]]);  
   }
+  return(out);
 }
 
 // Compute allele stationary distribution for a given site design matrix  
@@ -424,7 +425,8 @@ Rcpp::ListOf<std::vector<std::vector<double>>> phylogeny::testMsgPassing(SEXP da
 RCPP_MODULE(phylogeny) {
   class_<phylogeny>( "phylogeny" )
   .constructor<Rcpp::NumericVector, Rcpp::DataFrame, Rcpp::DataFrame, Rcpp::IntegerVector,Rcpp::List,Rcpp::List>()
-  .method("rate", &phylogeny::rate)
+  .method("rate", &phylogeny::rate )
+  .method("rateV", &phylogeny::rateV)
   .method("pi", &phylogeny::pi)
   .method("rateMatrix",&phylogeny::rateMatrix)
   .method("getRateIndex", &phylogeny::getRateIndex)
