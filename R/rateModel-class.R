@@ -107,6 +107,14 @@ rateModel <- function(data,rateFormula,piFormula=NULL,lineageTable=NULL,rateBoun
     piDM=stats::model.matrix(piFormula,getSiteInfo(data))
   }
   
+  ## Check that all elements in the design matrix are finite
+  if(any(!is.finite(rateDM))){
+    stop("Non-numeric/Non-finite elements in the rate design matrix")
+  }
+  if(any(!is.finite(piDM))){
+    stop("Non-numeric/Non-finite elements in the pi design matrix")
+  }
+  
   ## Standardize format for lineageTable and sort by child
   data.table::setcolorder(lineageTable,c("parent","child","edgeGroup"))
   data.table::setkeyv(x = lineageTable,cols = c("child"))
