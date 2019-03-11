@@ -46,14 +46,14 @@ if(exists('rateMod')){
                         getParams(rateMod)[7:9]
                       },c(0.1,0.2,0.3)))
   ## Test that correct rate calculations are performed for each group
-  rMax = 5; ## max rate
-  rMin = 0.001; ## min rate
+  rMax = getRateBounds(rateMod)[2]; ## max rate
+  rMin = getRateBounds(rateMod)[1]; ## min rate
   rMix0=sigmoid(sum(rateMod@rateDM[1,]))
   rMix1=sigmoid(sum(rateMod@rateDM[1,]))
   rMix2=sigmoid(sum(c(0.1,0.2,0.3)*rateMod@rateDM[1,]))
-  tr0=rMix0*rMin+(1-rMix0)*rMax
-  tr1=rMix1*rMin+(1-rMix1)*rMax
-  tr2=rMix2*rMin+(1-rMix2)*rMax
+  tr0=(1-rMix0)*rMin+rMix0*rMax
+  tr1=(1-rMix1)*rMin+rMix1*rMax
+  tr2=(1-rMix2)*rMin+rMix2*rMax
   testthat::test_that("Branch specific rate calculations",
                       testthat::expect_equal({
                         r0=rateMod@phylogeny$rate(0,rateMod@rateDM[1,])
