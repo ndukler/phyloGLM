@@ -64,6 +64,16 @@ double phylogeny::rate(const int child,const std::vector<double>& siteX){
   return(rFinal);
 }
 
+// Overloaded function for computing rates, can take many sites
+std::vector<double> phylogeny::rate(const int child,std::vector<double> sites,const SEXP ratePtr){
+  XPtr<std::vector<std::vector<double>>> r(ratePtr);
+  std::vector<std::vector<double>> rateX = *r;
+  std::vector <double> out(sites.size()); 
+  for(int i=0;i<sites.size();i++){
+    out[i]=rate(child,rateX[sites[i]]);  
+  }
+}
+
 // Compute allele stationary distribution for a given site design matrix  
 arma::vec phylogeny::pi(const std::vector<double>& piV){
   arma::vec p(nAlleles);
@@ -399,6 +409,17 @@ Rcpp::ListOf<std::vector<std::vector<double>>> phylogeny::testMsgPassing(SEXP da
   Rcpp::ListOf<std::vector<std::vector<double>>> L = List::create( _["alpha"] = alpha , _["beta"] = beta);
   return(L);
 }
+
+/*
+ * Validator functions for method dispatch in the Rcpp module
+ */
+// bool get_numericMatrix_valid(SEXP* args, int nargs){
+//   if( nargs != 1 ) return false ;
+//   if( TYPEOF(args[0]) != INTSXP ) return false ;
+//   return ( LENGTH(args[0]) == 1 ) ;
+// }
+
+//.method( "rate" , ( NumericVector (phylogeny::*)(int) )(&phylogeny::get) , &get_int_valid )
 
 RCPP_MODULE(phylogeny) {
   class_<phylogeny>( "phylogeny" )

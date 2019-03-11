@@ -28,7 +28,7 @@ methods::setMethod("rates", signature(model = "rateModel"), function(model,sites
   ##compute rates
   out=data.table::as.data.table(expand.grid(edgeGroup=as.integer(repChildren$edgeGroup),site=as.integer(sites)))
   out=merge(repChildren,out,by="edgeGroup")
-  out[,rate:=model@phylogeny$rate(child-1,model@rateDM[site,]),by=c("child","sites")]
+  out[,rate:=model@phylogeny$rate(child-1,site,model@rateDM@x),by=c("child")]
   out[,child:=NULL]
   return(out)
 })

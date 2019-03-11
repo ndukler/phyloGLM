@@ -45,6 +45,7 @@ public:
   phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFrame pDF,
             Rcpp::IntegerVector eGroup,Rcpp::List treeInfo,Rcpp::List hyper);
   double rate(const int child,const std::vector<double>& siteX);
+  std::vector<double> rate(const int child,std::vector<double> sites,const SEXP ratePtr);
   arma::vec pi(const std::vector<double>& piV);
   arma::mat rateMatrix(const arma::vec & pi,const double rate, const double branchLength);
   std::vector<double> siteLL(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr,const unsigned int threads);
