@@ -33,9 +33,11 @@ rateFormula = formula(~cre.class+logXpress+0)
 ## Set parameter values
 rateParams=matrix(c(-1,-4.5,-3.3),nrow=1)
 piParams=matrix(c(0.3,0.1,0,0,-0.1,0.5),nrow=2,ncol=3,byrow = T)
+## Rate bounds
+rBounds=c(10^-5,100)
 ## Simulate data
 aData=simulateSites(tr=tree,covariateTable = siteLabels,rateFormula = rateFormula, rateParams = rateParams,
-                    piParams = piParams)
+                    piParams = piParams,rateBounds = rBounds)
 ```
 Now create the allele data object:
 
@@ -46,7 +48,7 @@ ad=alleleData(data=aData$data,tree=tree,siteInfo = siteLabels)
 Now create a rate model specifying that genomic regions should be seperated by both cre.class and go.class.
 
 ```{r}
-rateMod=rateModel(data = ad,rateFormula=rateFormula,rateBounds = c(10^-5,100))
+rateMod=rateModel(data = ad,rateFormula=rateFormula,rateBounds = rBounds)
 ```
 Note that the likelihood calculations in this package scale well when parallelized up to one or two less than the number of available threads on your system.
 ```{r}
@@ -84,14 +86,9 @@ si[,site:=1:nrow(.SD)]
 rMerged=merge(si,rDist,by="site")
 ## Plot rate dsitribution, split by enhancers and promoters
 ggplot(rMerged,aes(x=cre.class,y=rate,fill=factor(edgeGroup)))+
-  geom_boxplot(notch = TRUE)+
-  scale_y_log10(labels = trans_format(log10,math_format()))
+  geom_boxplot(notch = TRUE)
 ```
 
-We can also compute the posterior allelic probabilties accross all nodes
-```{r}
-m=marginal(rateMod)
-```
 To get explicit p-values for specific parameters we can use the likelihood ratio test (since estimating the standard error via the hessian may not be reliable). To do that we must fit two models, one with (alternate model), and one without (null model) the parameter of interest (in this case the alternate model is the model we previously fit). Note how we are careful to set the formulas for the rate and stationary distributions seperately to ensure that the models differ by only one parameter. The models must also be nested in order for this test to be valid. A small p-value rejects the null model, concluding that the more complex model fits the data better, even given the additional degrees of freedom.
 
 ```{r}
