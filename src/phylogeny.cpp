@@ -60,7 +60,7 @@ double phylogeny::rate(const int child,const std::vector<double>& siteX){
   // Guarentee positive r between 0 and 1
   r=1.0/(1.0+std::exp(-r));
   // // Parameterize rate as a mixture distribution
-  double rFinal= (r)*rMin + (1.0-r)*rMax;
+  double rFinal= (1.0-r)*rMin + r*rMax;
   return(rFinal);
 }
 

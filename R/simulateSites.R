@@ -12,11 +12,13 @@
 #' each seperate alleles (note nAlleles = nrow(piParams)+1)
 #' @param lineageTable a data.frame with three columns, parent, child, and edgeGroup. Can be used to specify different
 #' rate parameters for different edges
+#' @param rateBounds two element numeric vector which gives upper and lower bounds for rate
 #' @name simulateSites
 #' @return list with the simulated data and the number of alleles
 #' @export
 
-simulateSites <- function(tr,covariateTable,rateFormula,rateParams=NULL,piFormula=NULL,piParams=NULL,lineageTable=NULL){
+simulateSites <- function(tr,covariateTable,rateFormula,rateParams=NULL,piFormula=NULL,piParams=NULL,
+                          lineageTable=NULL,rateBounds=c(10^-4,5)){
   ## **Start parameter tests**
   
   ## Check if piFormula is specified. If not, set to same as rateFormula
@@ -52,6 +54,15 @@ simulateSites <- function(tr,covariateTable,rateFormula,rateParams=NULL,piFormul
   if(!all(all.vars(piFormula) %in% colnames(covariateTable))){
     missing=setdiff(all.vars(piFormula),colnames(covariateTable))
     stop(paste("Covariates in the pi formula missing from the covariate table:",paste(missing,collapse = ",")))
+  }
+  
+  ## Check that rate bounds are valid
+  if(!length(rateBounds)==2 || !is.numeric(rateBounds)){
+    stop("rateBounds must be a numeric vector of length 2")
+  } else if (!all(is.finite(rateBounds)) || any(rateBounds<=0)){
+    stop("rateBounds must be finite and greater than 0")
+  } else if (! rateBounds[1] < rateBounds[2]){
+    stop("rateBounds[1] must be less than rateBounds[2]")
   }
   
   ## Check that the form of the parameter matricies are correct
@@ -98,10 +109,10 @@ simulateSites <- function(tr,covariateTable,rateFormula,rateParams=NULL,piFormul
   ## Create rate parameter matrix where col = branch parameters and row = coefficients
   branchRateParams=apply(tr$edge, 1, function(x) rateParams[lineageTable[child==x[2]]$edgeGroup,])
   ## Compute the rate for all sites
-  rateMin=10^-4
-  rateMax=5
+  rateMin=rateBounds[1]
+  rateMax=rateBounds[2]
   branchRateMix=1/(1+exp(-rateFeatureTable %*% branchRateParams))
-  branchRateAll=(branchRateMix*rateMin)+((1-branchRateMix)*rateMax)
+  branchRateAll=((1-branchRateMix)*rateMin)+((branchRateMix)*rateMax)
 
   ## Create matrix to hold simulated data
   simDat=matrix(nrow = nSites,ncol=length(tr$tip.label))
