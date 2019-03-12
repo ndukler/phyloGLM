@@ -5,7 +5,8 @@
 \title{Simulate data}
 \usage{
 simulateSites(tr, covariateTable, rateFormula, rateParams = NULL,
-  piFormula = NULL, piParams = NULL, lineageTable = NULL)
+  piFormula = NULL, piParams = NULL, lineageTable = NULL,
+  rateBounds = c(10^-4, 5))
 }
 \arguments{
 \item{tr}{tree}
@@ -25,6 +26,8 @@ each seperate alleles (note nAlleles = nrow(piParams)+1)}
 
 \item{lineageTable}{a data.frame with three columns, parent, child, and edgeGroup. Can be used to specify different
 rate parameters for different edges}
+
+\item{rateBounds}{two element numeric vector which gives upper and lower bounds for rate}
 }
 \value{
 list with the simulated data and the number of alleles
