@@ -38,6 +38,16 @@ private:
                                 const std::vector<std::vector<double>>& rateX, 
                                 const std::vector<std::vector<double>>& piX,
                                 unsigned int start, unsigned int end);
+  void chunkEdgewiseMarginalTransitions(std::vector<std::vector<std::vector<double>>>& expectedTransitions, 
+                                           const std::vector<std::vector<double>>& data,
+                                           const std::vector<std::vector<double>>& rateX, 
+                                           const std::vector<std::vector<double>>& piX,
+                                           unsigned int start, unsigned int end);
+  void chunkNodewiseMarginalTransitions(std::vector<std::vector<std::vector<double>>>& expectedTransitions, 
+                                                   const std::vector<std::vector<double>>& data,
+                                                   const std::vector<std::vector<double>>& rateX, 
+                                                   const std::vector<std::vector<double>>& piX,
+                                                   unsigned int start, unsigned int end);
     
 
 public:
@@ -48,10 +58,16 @@ public:
   std::vector<double> rateV(const int child,std::vector<double> sites,const SEXP ratePtr);
   arma::vec pi(const std::vector<double>& piV);
   arma::mat rateMatrix(const arma::vec & pi,const double rate, const double branchLength);
-  std::vector<double> siteLL(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr,const unsigned int threads);
+  std::vector<double> siteLL(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr,
+                             const unsigned int threads);
   double ll(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr, double scale,
                        const unsigned int threads);
-  std::vector<std::vector<std::vector<double>>> marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads);
+  std::vector<std::vector<std::vector<double>>> marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,
+                                                         const unsigned int threads);
+  std::vector<std::vector<std::vector<double>>> edgewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,
+                                                                    const unsigned int threads);
+  std::vector<std::vector<std::vector<double>>> nodewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,
+                                                                            const unsigned int threads);
   // Getters
   Rcpp::DataFrame getRateIndex();
   Rcpp::DataFrame getPiIndex();

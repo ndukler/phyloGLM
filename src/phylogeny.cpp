@@ -5,9 +5,12 @@
 #include "logSumExp.h"
 #include "expokit.h"
 #include <thread>
+#include <mutex>
 #include <RcppArmadillo.h>
 using namespace Rcpp;
 
+// mutex for use with the marginal transition function
+std::mutex marginalTrans;
 
 phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFrame pDF,
                      Rcpp::IntegerVector eGroup, Rcpp::List treeInfo,Rcpp::List hyper) : 
@@ -283,6 +286,161 @@ std::vector<std::vector<std::vector<double>>> phylogeny::marginal(SEXP dataPtr, 
   return(marginal);
 }
 
+//
+// Edgewise marginal transitions
+//
+
+void phylogeny::chunkEdgewiseMarginalTransitions(std::vector<std::vector<std::vector<double>>>& expectedTransitions, 
+                              const std::vector<std::vector<double>>& data,
+                              const std::vector<std::vector<double>>& rateX, 
+                              const std::vector<std::vector<double>>& piX,
+                              unsigned int start, unsigned int end){
+  for(unsigned int i=start;i<end;i++){
+    // Computre the stationary distribution for site i
+    arma::vec sitePi = pi(piX[i]);
+    // Rcpp::Rcout << "LogPi: " << logPi << std::endl;
+    std::vector<std::vector<double>> alpha = postorderMessagePassing(data[i], rateX[i], piX[i]);
+    std::vector<std::vector<double>> beta = preorderMessagePassing(alpha, rateX[i], piX[i]);
+    for(unsigned int e=0; e<edges.size();e++){
+      arma::mat transP(nAlleles,nAlleles,arma::fill::zeros); // The probability of each transition
+      int parentInd=edges[e][0];
+      int childInd=edges[e][1];
+      //Compute the rate for edge n
+      double r = rate(childInd,rateX[i]);
+      // Compute the log rate matrix for edge n
+      arma::mat logTMat = arma::log(rateMatrix(sitePi,r,edgeLength[childInd]));
+      // Iterate over all parent child combinations
+      for(int a=0;a<nAlleles;a++){ // iterate over parent alleles
+        for(int b=0;b<nAlleles;b++){ // iterate over child alleles
+          transP(a,b) = beta[parentInd][a]+ logTMat(a,b) + alpha[childInd][b];
+        }
+      }
+      // Compute partition function
+      double Z = logSumExpArma(arma::vectorise(transP));
+      // Accumulate transition probabilities for site
+      marginalTrans.lock();
+      for(int a=0;a<nAlleles;a++){ // iterate over parent alleles
+        for(int b=0;b<nAlleles;b++){ // iterate over child alleles
+          expectedTransitions[e][a][b]+=std::exp(transP(a,b)-Z);
+        }
+      }
+      marginalTrans.unlock();
+    }
+  }
+}
+
+std::vector<std::vector<std::vector<double>>> phylogeny::edgewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads) {
+  // Type and dereference external pointers
+  XPtr<std::vector<std::vector<double>>> d(dataPtr);
+  std::vector<std::vector<double>> data = *d;
+  XPtr<std::vector<std::vector<double>>> r(ratePtr);
+  std::vector<std::vector<double>> rateX = *r;
+  XPtr<std::vector<std::vector<double>>> p(piPtr);
+  std::vector<std::vector<double>> piX = *p;
+  
+  // Math for setting up block size to pass to threads
+  unsigned int sites=data.size();
+  unsigned int rows=sites / threads; // Number of blocks that parallel loop must be executed over
+  unsigned int extra = sites % threads; // remaining rows for last thread
+  unsigned int start = 0; // each thread does [start..end)
+  unsigned int end = rows;
+  
+  std::vector<std::vector<std::vector<double>>> expectedTransitions(edges.size(),std::vector<std::vector<double>>(nAlleles,std::vector<double>(nAlleles))); // Marginal per site distribution
+  std::vector<std::thread> workers; // vector of worker threads
+  // loop over sites running the post-order message passing algorithm
+  for(unsigned int t=0;t<threads;t++){
+    if (t == threads-1){ // last thread does extra rows:
+      end += extra;
+    }
+    workers.push_back(std::thread(&phylogeny::chunkEdgewiseMarginalTransitions, this, std::ref(expectedTransitions), std::ref(data),
+                                  std::ref(rateX), std::ref(piX),start, end));
+    start = end;
+    end = start + rows;
+  }
+  // Wait for all threads to finish
+  for (auto& w : workers) {
+    w.join();
+  }
+  return(expectedTransitions);
+}
+
+
+//
+// Nodewise marginal transitions
+//
+void phylogeny::chunkNodewiseMarginalTransitions(std::vector<std::vector<std::vector<double>>>& expectedTransitions, 
+                                                 const std::vector<std::vector<double>>& data,
+                                                 const std::vector<std::vector<double>>& rateX, 
+                                                 const std::vector<std::vector<double>>& piX,
+                                                 unsigned int start, unsigned int end){
+  for(unsigned int i=start;i<end;i++){
+    // Computre the stationary distribution for site i
+    arma::vec sitePi = pi(piX[i]);
+    // Rcpp::Rcout << "LogPi: " << logPi << std::endl;
+    std::vector<std::vector<double>> alpha = postorderMessagePassing(data[i], rateX[i], piX[i]);
+    std::vector<std::vector<double>> beta = preorderMessagePassing(alpha, rateX[i], piX[i]);
+    for(unsigned int e=0; e<edges.size();e++){
+      arma::mat transP(nAlleles,nAlleles,arma::fill::zeros); // The probability of each transition
+      int parentInd=edges[e][0];
+      int childInd=edges[e][1];
+      //Compute the rate for edge n
+      double r = rate(childInd,rateX[i]);
+      // Compute the log rate matrix for edge n
+      arma::mat logTMat = arma::log(rateMatrix(sitePi,r,edgeLength[childInd]));
+      // Iterate over all parent child combinations
+      for(int a=0;a<nAlleles;a++){ // iterate over parent alleles
+        for(int b=0;b<nAlleles;b++){ // iterate over child alleles
+          transP(a,b) = beta[parentInd][a]+ logTMat(a,b) + alpha[childInd][b];
+        }
+      }
+      // Compute partition function
+      double Z = logSumExpArma(arma::vectorise(transP));
+      // Accumulate transition probabilities for site
+      for(int a=0;a<nAlleles;a++){ // iterate over parent alleles
+        for(int b=0;b<nAlleles;b++){ // iterate over child alleles
+          expectedTransitions[i][a][b]+=std::exp(transP(a,b)-Z);
+        }
+      }
+    }
+  }
+}
+
+std::vector<std::vector<std::vector<double>>> phylogeny::nodewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads) {
+  // Type and dereference external pointers
+  XPtr<std::vector<std::vector<double>>> d(dataPtr);
+  std::vector<std::vector<double>> data = *d;
+  XPtr<std::vector<std::vector<double>>> r(ratePtr);
+  std::vector<std::vector<double>> rateX = *r;
+  XPtr<std::vector<std::vector<double>>> p(piPtr);
+  std::vector<std::vector<double>> piX = *p;
+  
+  // Math for setting up block size to pass to threads
+  unsigned int sites=data.size();
+  unsigned int rows=sites / threads; // Number of blocks that parallel loop must be executed over
+  unsigned int extra = sites % threads; // remaining rows for last thread
+  unsigned int start = 0; // each thread does [start..end)
+  unsigned int end = rows;
+  
+  std::vector<std::vector<std::vector<double>>> expectedTransitions(sites,std::vector<std::vector<double>>(nAlleles,std::vector<double>(nAlleles))); // Marginal per site distribution
+  std::vector<std::thread> workers; // vector of worker threads
+  // loop over sites running the post-order message passing algorithm
+  for(unsigned int t=0;t<threads;t++){
+    if (t == threads-1){ // last thread does extra rows:
+      end += extra;
+    }
+    workers.push_back(std::thread(&phylogeny::chunkNodewiseMarginalTransitions, this, std::ref(expectedTransitions), std::ref(data),
+                                  std::ref(rateX), std::ref(piX),start, end));
+    start = end;
+    end = start + rows;
+  }
+  // Wait for all threads to finish
+  for (auto& w : workers) {
+    w.join();
+  }
+  return(expectedTransitions);
+}
+
+
 /*
  * Log-likelihood functions
  */
@@ -434,6 +592,8 @@ RCPP_MODULE(phylogeny) {
   .method("siteLL", &phylogeny::siteLL)
   .method("ll", &phylogeny::ll)
   .method("marginal", &phylogeny::marginal)
+  .method("edgewiseMarginalTransitions", &phylogeny::edgewiseMarginalTransitions)
+  .method("nodewiseMarginalTransitions", &phylogeny::nodewiseMarginalTransitions)
   .method("getParams", &phylogeny::getParams)
   .method("setParams", &phylogeny::setParams)
   .method("getRateBounds", &phylogeny::getRateBounds)
