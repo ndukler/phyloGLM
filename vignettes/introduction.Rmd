@@ -36,7 +36,7 @@ rateFormula = formula(~cre.class+logXpress+0)
 rateParams=matrix(c(-1,-4.5,-3.3),nrow=1)
 piParams=matrix(c(0.3,0.1,0,0,-0.1,0.5),nrow=2,ncol=3,byrow = T)
 ## Rate bounds
-rBounds=c(10^-5,100)
+rBounds=c(10^-2,10)
 ## Simulate data
 aData=simulateSites(tr=tree,covariateTable = siteLabels,rateFormula = rateFormula, rateParams = rateParams,
                     piParams = piParams,rateBounds = rBounds)
