@@ -11,7 +11,7 @@
 \item{alpha}{plot the confidence interval of the parameters from [alpha/2,1-alpha/2]}
 }
 \value{
-a data.table with the parameter values and standard errors
+a list of two plots, one for the rate parameters, one for the pi parameters
 }
 \description{
 Plots parameter values and standard errors

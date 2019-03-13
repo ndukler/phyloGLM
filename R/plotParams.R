@@ -2,21 +2,25 @@
 #'
 #' Plots parameter values and standard errors
 #' @param x rateModel object or the data.frame from se(rateModel)
+#' @param hess the hessian for the model (optional)
 #' @param alpha plot the confidence interval of the parameters from [alpha/2,1-alpha/2]
 #' @name plotParams
-#' @return a data.table with the parameter values and standard errors
+#' @return a list of two plots, one for the rate parameters, one for the pi parameters
 #' @include rateModel-class.R
 #' @export 
-methods::setGeneric("plotParams", function(x,alpha=0.05) {
+methods::setGeneric("plotParams", function(x,hess=NULL,alpha=0.05) {
   standardGeneric("plotParams")
 })
 
 #' @name plotParams
 #' @rdname plotParams
 #' @aliases plotParams,rateModel,rateModel-method 
-methods::setMethod("plotParams", signature(x = "rateModel"), function(x,alpha=0.05) {
+methods::setMethod("plotParams", signature(x = "rateModel"), function(x,hess=NULL,alpha=0.05) {
+  if(!is.null(hess) && !is.matrix(hess)){
+    stop("Hessian must be a matrix")
+  }
   ## Get parameter values and standard errors
-  seTab=se(x)
+  seTab=se(model = x,hess = hess)
   ## Create bar plot for parameters
   gAll <- plotParams(seTab,alpha) 
   return(gAll)
@@ -25,7 +29,7 @@ methods::setMethod("plotParams", signature(x = "rateModel"), function(x,alpha=0.
 #' @name plotParams
 #' @rdname plotParams
 #' @aliases plotParams,data.frame,data.frame-method 
-methods::setMethod("plotParams", signature(x = "data.frame"), function(x,alpha=0.05) {
+methods::setMethod("plotParams", signature(x = "data.frame"), function(x,hess=NULL,alpha=0.05) {
   ## Check if the data.frame has the correct columns
   if(!all(c("group","name","idx","pType","value","se") %in% colnames(x))){
     stop("Incorrectly formated parameter table. Try running se() on the rateModel object to get the correct table.")
@@ -46,7 +50,8 @@ methods::setMethod("plotParams", signature(x = "data.frame"), function(x,alpha=0
     cowplot::theme_cowplot()+
     ggplot2::guides(color=ggplot2::guide_legend(title="Edge Group"))+
     ggplot2::xlab("Parameter")+
-    ggplot2::ylab("Value")
+    ggplot2::ylab("Value")+
+    ggplot2::ggtitle("Rate parameters")
   piG = ggplot2::ggplot(x[pType=="pi"], ggplot2::aes(x=name,
                                                      y=value,
                                                      ymin = value + se*z_star[1],
@@ -58,7 +63,7 @@ methods::setMethod("plotParams", signature(x = "data.frame"), function(x,alpha=0
     cowplot::theme_cowplot()+
     ggplot2::guides(color=ggplot2::guide_legend(title="Allele"))+
     ggplot2::xlab("Parameter")+
-    ggplot2::ylab("Value")
-  gAll <- cowplot::plot_grid(rateG,piG,align ="hv" ,ncol=1)
-  return(gAll)
+    ggplot2::ylab("Value")+
+    ggplot2::ggtitle("Allele stationary distribution parameters")
+  return(list(rate=rateG,pi=piG))
 })
