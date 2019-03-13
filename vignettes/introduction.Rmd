@@ -15,6 +15,8 @@ First create some data and a tree. Pretend that sites are split into two classes
 library(phyloGLM)
 library(cowplot)
 library(scales)
+library(reshape2)
+library(data.table)
 ## Set seed for consistency
 set.seed(123)
 ## Set some parameters for the simulation
@@ -34,7 +36,7 @@ rateFormula = formula(~cre.class+logXpress+0)
 rateParams=matrix(c(-1,-4.5,-3.3),nrow=1)
 piParams=matrix(c(0.3,0.1,0,0,-0.1,0.5),nrow=2,ncol=3,byrow = T)
 ## Rate bounds
-rBounds=c(10^-5,100)
+rBounds=c(10^-2,10)
 ## Simulate data
 aData=simulateSites(tr=tree,covariateTable = siteLabels,rateFormula = rateFormula, rateParams = rateParams,
                     piParams = piParams,rateBounds = rBounds)
@@ -75,7 +77,7 @@ Once fitted we can extract the parameters, their approximate standard errors and
 seTab=se(rateMod,fitted_status$hessian)
 plotParams(seTab)
 ```
-Because of the way the rate is parameterized, the exact values of the rate coefficients depend heavily on the upper and lower bounds for the rate (although the relative impacts are still interpertable). Thus it can be valuable to view the marginal distribution of rate estimates with respect each covariate. If we want to see the distribution of rates for specific covariate values we can compute the rates at desired sites for all edgeGroups and plot them.
+Because of the way the rate is parameterized, the exact values of the rate coefficients depend heavily on the upper and lower bounds for the rate (although the relative impacts are still interpertable). Thus it can be valuable to view the marginal distribution of rate estimates with respect each covariate. If we want to see the distribution of rates for specific covariate values we can compute the rates at desired sites for all edgeGroups and plot them. From this we can see the behavior of the rates with respect to the covariates on the data.
 ```{r}
 ## Compute the rate distribution
 rDist=rates(rateMod)
@@ -86,11 +88,40 @@ si[,site:=1:nrow(.SD)]
 rMerged=merge(si,rDist,by="site")
 ## Plot rate dsitribution, split by enhancers and promoters
 g1=ggplot(rMerged,aes(x=cre.class,y=rate,fill=factor(edgeGroup)))+
-  geom_boxplot(notch = TRUE)
+  geom_boxplot(notch = TRUE)+
+  theme(legend.position="bottom")
 g2=ggplot(rMerged,aes(x=logXpress,y=rate,fill=factor(edgeGroup)))+
-  geom_point()
+  geom_point()+
+  theme(legend.position="bottom")
+plot_grid(g1,g2,align = "h")
 ```
-
+We can also compute the number of turnover events, both per site and plot those and a function of the covariates.
+```{r}
+## Compute expected number of transitions
+et=marginalTransitions(rateMod,aggregate="node")
+## Place data in plottable table and merge with covariates
+dat=rbindlist(lapply(et,function(x) as.data.table(melt(x))),idcol = "site")
+setnames(dat,c("Var1","Var2"),c("Anc","Dec"))
+dat[,turnover:=paste0(Anc,"->",Dec)]
+tDat=merge(si,dat,by="site")
+## Only keep elements that change allele (e.g. not 1-> 1)
+tDat=tDat[Anc!=Dec]
+tDat[,leDisc:=cut(logXpress,breaks = quantile(logXpress,probs = seq(0,1,0.2)),include.lowest = TRUE)]
+# create boxplot 
+p1 = ggplot(tDat,aes(x=cre.class,y=value))+
+  geom_boxplot(notch = TRUE,outlier.shape = NA)+
+  theme(legend.position="bottom")+
+  ylab("Expected number of\nturnover events")+
+  ylim(0,3)
+p2 = ggplot(tDat,aes(x=leDisc,y=value))+
+  geom_boxplot(notch = TRUE,outlier.shape = NA)+
+  theme(legend.position="bottom")+
+  ylab("Expected number of\nturnover events")+
+  ylim(0,3)+
+  theme(axis.text.x = element_text(angle=45,hjust=1))+
+  xlab("Log(Expression)")
+plot_grid(p1,p2,align = "h")
+```
 To get explicit p-values for specific parameters we can use the likelihood ratio test (since estimating the standard error via the hessian may not be reliable). To do that we must fit two models, one with (alternate model), and one without (null model) the parameter of interest (in this case the alternate model is the model we previously fit). Note how we are careful to set the formulas for the rate and stationary distributions seperately to ensure that the models differ by only one parameter. The models must also be nested in order for this test to be valid. A small p-value rejects the null model, concluding that the more complex model fits the data better, even given the additional degrees of freedom.
 
 ```{r}
