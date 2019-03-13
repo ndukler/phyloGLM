@@ -136,4 +136,12 @@ Models may also be compared usng the baysian information criterion (BIC) which d
 ```{r}
 bic(rateMod)-bic(rateModNull)
 ```
+Lastly you can save any model using a combination of the pack() and saveRDS() functions. The model can then be recreated with the unpack command and you're good to go!
+```{r}
+pMod=pack(rateMod)
+## Saving and reloading the packed model (can use compression as well)
+# saveRDS(object = pMod,file = "~/model.RData.gz",compress = "gzip")
+# pMod=readRDS(file = "~/model.RData.gz")
+rateMod2=unpack(pMod)
+```
 
