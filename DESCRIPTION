@@ -44,6 +44,7 @@ Collate:
     'getTree.R'
     'lrt.R'
     'marginal.R'
+    'pack.R'
     'package.R'
     'phyloGrad.R'
     'phyloHess.R'
