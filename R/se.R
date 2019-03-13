@@ -26,6 +26,9 @@ methods::setMethod("se", signature(model = "rateModel",hess="missing"), function
 #' @rdname se
 #' @aliases se,rateModel,rateModel-method 
 methods::setMethod("se", signature(model = "rateModel",hess="matrix"), function(model,hess) {
+  if(length(getParams(model)[which(!model@fixed)]) != nrow(hess)){
+    stop("Hessian has more rows than model has unfixed parameters")
+  }
   ## Get parameter values
   paramVals=getParams(model)[which(!model@fixed)]
   ## Invert the hessian
