@@ -8,7 +8,7 @@ methods::setGeneric("fit", function(model,scale=NULL,method=c("l-bfgs-b","mlsl",
 #' Fits rate model object and returns fitted model
 #' @param model rateModel
 #' @param scale a scale factor to apply to log-likelihood, defaults to -1/nsites
-#' @param method Optimization method to use ("l-bfgs-b","mlsl","stogo")
+#' @param method Optimization method to use ("bfgs","mlsl","stogo")
 #' @param threads number of threads to use
 #' @param control See control from \link[stats]{optim} if using l-bfgs-b, otherwise look at \link[nloptr]{nl.opts}
 #' @name fit
@@ -25,8 +25,8 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=-
   }
   ## Check method and set defaults
   if(length(method)>1){
-    method="l-bfgs-b"
-  } else if(! method %in% c("l-bfgs-b","mlsl","stogo")){
+    method="bfgs"
+  } else if(! method %in% c("bfgs","mlsl","stogo")){
     stop("Invalid optimization method specified")
   }
   
@@ -49,7 +49,7 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model,scale=-
   }
   cont[["trace"]]=1
   
-  if(method=="l-bfgs-b"){
+  if(method=="bfgs"){
     sink(file=log)
     optMod=optim(par = getParams(model)[which(!model@fixed)],fn = scaledLL,gr = phyloGrad,model=model,scale=scale,
                           threads=threads,method="BFGS",hessian = FALSE)
