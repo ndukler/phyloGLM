@@ -22,6 +22,11 @@ private:
   int nTips; // Number of tips on the tree
   int nNode; // Number of nodes on the tree
   int root; // Index of the root node
+  // Special variables for gradient computations
+  double eps; // epsilon for gradient evaluation
+  int gradEdgeGroup; // edge group for which dL/dz should be evaluated
+  int gradAllele; // allele for which dL/dz should be evaluated
+  double epsScale; 
   
   // Functions
   std::vector<std::vector<double>> postorderMessagePassing(const std::vector<double>& data, 
@@ -62,6 +67,8 @@ public:
                              const unsigned int threads);
   double ll(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr, double scale,
                        const unsigned int threads);
+  std::vector<double> grad(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr, double scale,
+                         const unsigned int threads);
   std::vector<std::vector<std::vector<double>>> marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,
                                                          const unsigned int threads);
   std::vector<std::vector<std::vector<double>>> edgewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,

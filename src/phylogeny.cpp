@@ -40,6 +40,11 @@ phylogeny::phylogeny(Rcpp::NumericVector par,Rcpp::DataFrame rDF, Rcpp::DataFram
   Rcpp::NumericVector rateBounds=Rcpp::as<Rcpp::NumericVector>(hyper[0]);
   rMin = rateBounds(0); // min rate
   rMax = rateBounds(1); // max rate
+  // Special variables for partial gradient evaluation
+  eps = std::cbrt(std::numeric_limits<double>::epsilon()); // Select epsilon as (eps_machine)^(1/3)
+  epsScale=0;
+  gradEdgeGroup = -1; // set so that epsilon not applied to z for any edge group
+  gradAllele = -1; // set so that epsilon not applied to z for any allele
 }
 
 /*
@@ -56,14 +61,18 @@ double phylogeny::rate(const int child,const std::vector<double>& siteX){
   if(siteX.size() != parInd.size()){
     Rcpp::stop("Error in rate calculation: feature/parameter vector length mismatch");
   }
-  double r=0;
+  double z=0;
   for(unsigned int i=0; i< parInd.size();i++){
-    r+= params[parInd[i]]*siteX[i];  
+    z+= params[parInd[i]]*siteX[i];  
+  }
+  // Used in gradient calculations to compute dL/dz, otherwise is skipped
+  if(edgeGroup[child] == gradEdgeGroup){
+    z+=(eps*epsScale);
   }
   // Guarentee positive r between 0 and 1
-  r=1.0/(1.0+std::exp(-r));
+  double w=1.0/(1.0+std::exp(-z));
   // // Parameterize rate as a mixture distribution
-  double rFinal= (1.0-r)*rMin + r*rMax;
+  double rFinal= (1.0-w)*rMin + w*rMax;
   return(rFinal);
 }
 
@@ -92,12 +101,17 @@ arma::vec phylogeny::pi(const std::vector<double>& piV){
     std::iota(col.begin(), col.end(), 0);
     // Get parameter indicies
     std::vector<int> parInd = piIndex.getIndex(std::vector<int>(1,i-1),col,true);
-    double temp=0; // accumulator value for -z in e^(-z)
+    double z=0; // accumulator value for -z in e^(-z)
     for(unsigned int j=0;j<parInd.size();j++){
-      temp-=params[parInd[j]]*piV[j];
+      z+=params[parInd[j]]*piV[j];
+    }
+    // Used in gradient calculations to compute dL/dz, otherwise is skipped
+    if(i == gradAllele){
+      // std::cout << "In dZ pi: " << z << std::endl;
+      z+=(eps*epsScale);
     }
     //Rcpp::Rcout << "temp: " << temp << std::endl;
-    p(i)=temp;
+    p(i)=(-z);
     //Rcpp::Rcout << "pi(i): " << p(i) << std::endl;
   }
   // // subtract off the max to prevent overflow
@@ -286,10 +300,8 @@ std::vector<std::vector<std::vector<double>>> phylogeny::marginal(SEXP dataPtr, 
   return(marginal);
 }
 
-//
-// Edgewise marginal transitions
-//
 
+// Edgewise marginal transitions
 void phylogeny::chunkEdgewiseMarginalTransitions(std::vector<std::vector<std::vector<double>>>& expectedTransitions, 
                               const std::vector<std::vector<double>>& data,
                               const std::vector<std::vector<double>>& rateX, 
@@ -365,9 +377,8 @@ std::vector<std::vector<std::vector<double>>> phylogeny::edgewiseMarginalTransit
 }
 
 
-//
-// Nodewise marginal transitions
-//
+
+//Nodewise marginal transitions
 void phylogeny::chunkNodewiseMarginalTransitions(std::vector<std::vector<std::vector<double>>>& expectedTransitions, 
                                                  const std::vector<std::vector<double>>& data,
                                                  const std::vector<std::vector<double>>& rateX, 
@@ -517,6 +528,97 @@ double phylogeny::ll(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr, do
 }
 
 /*
+ * Gradient functions
+ */
+std::vector<double> phylogeny::grad(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr, double scale,
+                     const unsigned int threads){
+  
+  /*
+   * Compute gradients for rate parameters
+   */
+  
+  // Cast ratePtr to std::vector
+  XPtr<std::vector<std::vector<double>>> r(ratePtr);
+  std::vector<std::vector<double>> rateX = *r;
+  // Initialize vector to hold gradients
+  std::vector<double> g(params.size(),0);
+  // get greatest edgeGroup index, already know that min is 0 by construction
+  const int egMax = *std::max_element(begin(edgeGroup), end(edgeGroup));
+  // Retrive edgeGroup and rate index metadata
+  std::vector<int> paramGrp = rateIndex.getGroup();
+  std::vector<int> paramCol = rateIndex.getColumn();
+  std::vector<int> paramInd = rateIndex.getIndex(0);
+  for(int e = 0; e <= egMax; e++){
+    // Compute dL/dz
+    gradEdgeGroup = e;
+    epsScale=1;
+    std::vector<double> llPlus=siteLL(dataPtr, ratePtr, piPtr, threads); // compute ll for z+eps
+    epsScale=-1;
+    std::vector<double> llMinus=siteLL(dataPtr, ratePtr, piPtr, threads); // compute ll for z-eps
+    // Iterate over all sites and compute the gradient for the partial likelihood per site
+    std::vector<double> llPartial(llMinus.size());
+    for(unsigned int i=0; i < llMinus.size(); i++){
+      llPartial[i] = (llPlus[i]-llMinus[i])/(2*eps);
+    }
+    // Iterate over each parameter and compute the contribution of each site to dL/dTheta
+    
+    for(unsigned int p=0; p < paramGrp.size(); p++){
+      // If this parameter is from the correct param group
+      if(paramGrp[p] == e){
+        for(unsigned int i=0; i < llMinus.size(); i++){
+          g[paramInd[p]]+=(llPartial[i]*rateX[i][paramCol[p]]); // accumulate dL/dz * dz/dTheta accross sites
+        }
+      }
+    }
+  }
+  gradEdgeGroup = -1; // disable gradient calculations on rate parameters
+
+  /*
+   * Compute gradients for pi parameters
+   */
+  
+  // Cast piPtr to std::vector
+  XPtr<std::vector<std::vector<double>>> pi(ratePtr);
+  std::vector<std::vector<double>> piX = *pi;
+  // Get piParams metadata
+  paramGrp = piIndex.getGroup();
+  paramCol = piIndex.getColumn();
+  paramInd = piIndex.getIndex(0);
+  for(int a = 1; a < nAlleles; a++){
+    // Compute dL/dz
+    gradAllele = a;
+    epsScale=1;
+    std::vector<double> llPlus=siteLL(dataPtr, ratePtr, piPtr, threads); // compute ll for z+eps
+    epsScale=-1;
+    std::vector<double> llMinus=siteLL(dataPtr, ratePtr, piPtr, threads); // compute ll for z-eps
+    // Iterate over all sites and compute the gradient for the partial likelihood per site
+    std::vector<double> llPartial(llMinus.size());
+    for(unsigned int i=0; i < llMinus.size(); i++){
+      llPartial[i] = (llPlus[i]-llMinus[i])/(2*eps);
+    }
+    // Iterate over each parameter and compute the contribution of each site to dL/dTheta
+    
+    for(unsigned int p=0; p < paramGrp.size(); p++){
+      // If this parameter is from the correct param group
+      if(paramGrp[p] == (a-1)){
+        for(unsigned int i=0; i < llMinus.size(); i++){
+          g[paramInd[p]]+=(llPartial[i]*piX[i][paramCol[p]]); // accumulate dL/dz * dz/dTheta accross sites
+          // std::cout << llPartial[i] << " " << piX[i][paramCol[p]] << std::endl;
+        }
+      }
+    }
+  }
+  gradAllele = -1; // disable gradient calculations on rate parameters
+  // Scale gradients
+  for(unsigned int i = 0; i<g.size();i++){
+    g[i]=g[i]*scale;
+  }
+  
+  return(g);
+}
+
+
+/*
  * Getter and setter functions
  */
 
@@ -591,6 +693,7 @@ RCPP_MODULE(phylogeny) {
   .method("getPiIndex", &phylogeny::getPiIndex)
   .method("siteLL", &phylogeny::siteLL)
   .method("ll", &phylogeny::ll)
+  .method("grad", &phylogeny::grad)
   .method("marginal", &phylogeny::marginal)
   .method("edgewiseMarginalTransitions", &phylogeny::edgewiseMarginalTransitions)
   .method("nodewiseMarginalTransitions", &phylogeny::nodewiseMarginalTransitions)

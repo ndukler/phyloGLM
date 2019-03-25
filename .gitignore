@@ -10,3 +10,5 @@ inst/doc
 *.Rproj
 vignettes/log\.txt
 data
+
+log\.txt

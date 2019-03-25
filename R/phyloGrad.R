@@ -46,7 +46,9 @@ methods::setMethod("phyloGrad", signature(x="missing",model = "rateModel"), func
   # }
   # ## Compute Gradients
   # g=(f_plus-f_minus)/h_reals
-  g=numDeriv::jacobian(func = scaledLL,method="simple",x=getParams(model),model=model,scale=scale,threads=threads)
+  g=rateMod@phylogeny$grad(rateMod@alleleData$alleleData@data@x,
+                         rateMod@rateDM@x,
+                         rateMod@piDM@x,scale,threads)[!model@fixed]
   return(g)
 })
 

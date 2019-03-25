@@ -37,10 +37,6 @@ paramIndex::paramIndex(Rcpp::IntegerVector grp,Rcpp::IntegerVector col, Rcpp::St
   }
 }
 
-std::vector<int> paramIndex::getIndex(int a){
-  return(idx);
-}
-
 std::vector<int> paramIndex::getIndex(const std::vector<int> grp, const std::vector<int> col,bool expand){
   // Rcpp::Rcout << "Lookup Matrix" << lookup << std::endl;
   // Rcpp::Rcout << "Group" << grp << std::endl;
@@ -98,6 +94,11 @@ Rcpp::DataFrame paramIndex::asDF(){
 /*
  * Accessor methods
  */
+// Cannot be diambiguated with no arguments, a is just dummy variable
+std::vector<int> paramIndex::getIndex(int a){
+  return(idx);
+}
+
 std::vector<std::vector<int>> paramIndex::getLookup(){
   return(lookup);
 }
