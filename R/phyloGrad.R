@@ -46,9 +46,9 @@ methods::setMethod("phyloGrad", signature(x="missing",model = "rateModel"), func
   # }
   # ## Compute Gradients
   # g=(f_plus-f_minus)/h_reals
-  g=rateMod@phylogeny$grad(rateMod@alleleData$alleleData@data@x,
-                         rateMod@rateDM@x,
-                         rateMod@piDM@x,scale,threads)[!model@fixed]
+  g=model@phylogeny$grad(model@alleleData$alleleData@data@x,
+                         model@rateDM@x,
+                         model@piDM@x,scale,threads)[!model@fixed]
   return(g)
 })
 
