@@ -103,7 +103,7 @@ arma::vec phylogeny::pi(const std::vector<double>& piV){
     std::vector<int> parInd = piIndex.getIndex(std::vector<int>(1,i-1),col,true);
     double z=0; // accumulator value for -z in e^(-z)
     for(unsigned int j=0;j<parInd.size();j++){
-      z-=params[parInd[j]]*piV[j];
+      z+=params[parInd[j]]*piV[j];
     }
     // Used in gradient calculations to compute dL/dz, otherwise is skipped
     if(i == gradAllele){
@@ -111,7 +111,7 @@ arma::vec phylogeny::pi(const std::vector<double>& piV){
       z+=(eps*epsScale);
     }
     //Rcpp::Rcout << "temp: " << temp << std::endl;
-    p(i)=z;
+    p(i)=(-z);
     //Rcpp::Rcout << "pi(i): " << p(i) << std::endl;
   }
   // // subtract off the max to prevent overflow
@@ -609,7 +609,11 @@ std::vector<double> phylogeny::grad(const SEXP dataPtr, const SEXP ratePtr,const
     }
   }
   gradAllele = -1; // disable gradient calculations on rate parameters
-
+  // Scale gradients
+  for(unsigned int i = 0; i<g.size();i++){
+    g[i]=g[i]*scale;
+  }
+  
   return(g);
 }
 

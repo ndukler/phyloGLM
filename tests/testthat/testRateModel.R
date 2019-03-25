@@ -129,13 +129,10 @@ if(exists('rateMod')){
   
   ## -------------------------------------------------------------------------- ##
   testthat::context("Gradient calculations")
-  g_num=phyloGLM:::phyloGrad(getParams(rateMod),rateMod)
-  g_ana=rateMod@phylogeny$grad(rateMod@alleleData$alleleData@data@x,
-                         rateMod@rateDM@x,
-                         rateMod@piDM@x,1,1)
+  g_num=as.numeric(numDeriv::jacobian(func = phyloGLM:::scaledLL,method="simple",x=getParams(rateMod),model=rateMod,scale=-1,threads=1))
+  g_ana=phyloGLM:::phyloGrad(model=rateMod,scale = -1)
   testthat::test_that("Check rate gradient calculations",
-                      testthat::expect_equal(c(1,0,0,1,0,1, ((pl1*pl2*pl3)*piProb)/sum(((pl1*pl2*pl3)*piProb))),
-                                             exp(unlist(marginal(rateMod)))))
+                      testthat::expect_gt(cor(g_num,g_ana),0.99))
   
 
 
