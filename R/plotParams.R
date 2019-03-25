@@ -51,7 +51,8 @@ methods::setMethod("plotParams", signature(x = "data.frame"), function(x,hess=NU
     ggplot2::guides(color=ggplot2::guide_legend(title="Edge Group"))+
     ggplot2::xlab("Parameter")+
     ggplot2::ylab("Value")+
-    ggplot2::ggtitle("Rate parameters")
+    ggplot2::ggtitle("Rate parameters")+
+    theme(panel.grid.major = element_line("black",0.1,"dashed"))
   piG = ggplot2::ggplot(x[pType=="pi"], ggplot2::aes(x=name,
                                                      y=value,
                                                      ymin = value + se*z_star[1],
@@ -64,6 +65,7 @@ methods::setMethod("plotParams", signature(x = "data.frame"), function(x,hess=NU
     ggplot2::guides(color=ggplot2::guide_legend(title="Allele"))+
     ggplot2::xlab("Parameter")+
     ggplot2::ylab("Value")+
-    ggplot2::ggtitle("Allele stationary distribution parameters")
+    ggplot2::ggtitle("Allele stationary distribution parameters")+
+    theme(panel.grid.major = element_line("black",0.1,"dashed"))
   return(list(rate=rateG,pi=piG))
 })
