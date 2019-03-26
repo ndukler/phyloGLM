@@ -44,9 +44,9 @@ methods::setMethod("plotParams", signature(x = "data.frame"), function(x,hess=NU
                                                          ymin = value + se*z_star[1],
                                                          ymax = value + se*z_star[2], 
                                                          color= factor(group))) +
+    ggplot2::geom_hline(yintercept = 0)+
     ggplot2::geom_point(size=2, position=pos, stat="identity",shape=18,size=1) +
     ggplot2::geom_errorbar(position=pos, ggplot2::aes(width=0.2))+
-    ggplot2::geom_hline(yintercept = 0)+
     cowplot::theme_cowplot()+
     ggplot2::guides(color=ggplot2::guide_legend(title="Edge Group"))+
     ggplot2::xlab("Parameter")+
@@ -58,9 +58,9 @@ methods::setMethod("plotParams", signature(x = "data.frame"), function(x,hess=NU
                                                      ymin = value + se*z_star[1],
                                                      ymax = value + se*z_star[2], 
                                                      color= factor(group+2))) +
+    ggplot2::geom_hline(yintercept = 0)+
     ggplot2::geom_point(size=2, position=pos, stat="identity",shape=18,size=1) +
     ggplot2::geom_errorbar(position=pos, ggplot2::aes(width=0.2))+
-    ggplot2::geom_hline(yintercept = 0)+
     cowplot::theme_cowplot()+
     ggplot2::guides(color=ggplot2::guide_legend(title="Allele"))+
     ggplot2::xlab("Parameter")+
