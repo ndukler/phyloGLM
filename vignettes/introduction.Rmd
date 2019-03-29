@@ -11,51 +11,52 @@ vignette: >
 
 ## Constructing your first rate model
 
-First we create a tree and simulate two genomic covariates, cre.class and logXpress (log mean gene expression). Then we define a formula which describes how the covariates parameterized the linear function inside both the rate and stationary allele frequency (pi) link functions and prvovide coefficients. From there we supply upper and lower bounds on the rate and simulate data. 
+We need several elements to construct a rate model. The first is a tree, which, in this case, we read in from newick format using read.tree from the ape package.
 
-```{r simulate_data, warning=FALSE,message=FALSE}
+```{r read_tree, warning=FALSE,message=FALSE}
 library(phyloGLM)
 library(cowplot)
 library(scales)
 library(reshape2)
 library(data.table)
-## Set seed for consistency
-set.seed(123)
-## Set some parameters for the simulation
-species <- c("A", "B", "C", "D", "E")
-nAlleles <- 3
-nSites <- 1000
+library(ape)
 
-## Create test trees, both one that will fail, and one that will pass
-tree <- ape::rtree(n = length(species), tip.label = species)
+## Read in a sample tree
+tree=read.tree(system.file("extdata", "sampleTree.nh", package="phyloGLM"))
+plot(tree)
+```
+Next we need set of covariates. Note that we also included a site id as the first column, this will be useful in a moment.
+```{r read_covariates, warning=FALSE,message=FALSE}
+## Read in covarites associated with each site 
+siteLabels=fread(system.file("extdata", "siteCovariates.txt", package="phyloGLM"))
+head(siteLabels)
+```
 
-## Create a covariate data.frame with labels
-siteLabels <- data.frame(
-  cre.class = factor(rep(c("Enhancer", "Promoter"), times = c(3 / 4 * nSites, 1 / 4 * nSites))),
-  logXpress = rnorm(n = nSites, mean = 0, sd = 1)
-)
-## Set the rate parameter formula
-rateFormula <- formula(~ cre.class + logXpress + 0)
-## Set parameter values
-rateParams <- matrix(c(-1, -4.5, -3.3), nrow = 1)
-piParams <- matrix(c(0.3, 0.1, 0, 0, -0.1, 0.5), nrow = 2, ncol = 3, byrow = T)
-## Rate bounds
-rBounds <- c(10^-2, 10)
-## Simulate data
-aData <- simulateSites(
-  tr = tree, covariateTable = siteLabels, rateFormula = rateFormula, rateParams = rateParams,
-  piParams = piParams, rateBounds = rBounds
-)
+Last we need to read in the allele data. It's easiest to do this when the allele data is stored in text file where the first two columns are "site" and "species" respectively, and all other columns corresond the the conditional allele probabilities as shown below:
+
+```{r show_paf_format}
+writeLines(readLines(system.file("extdata", "samplePAF.txt", package="phyloGLM"),3))
+```
+
+If in this format, it can be read into the format required to construct and alleleData object using the \code{readPAF()} function as follows. The subset argument guarentees that only the sites of interest are read in and matches their order in the subset vector. We can use value of the \code{siteLabels$site} to ensure the row order of the allele data matches the covariates. 
+```{r read_paf, warning=FALSE,message=FALSE}
+## Read in allele data
+aData=readPAF(system.file("extdata", "samplePAF.txt", package="phyloGLM"),subset = siteLabels$site)
 ```
 Now create the allele data object:
 
 ```{r build_allele_data,results="hide"}
-ad <- alleleData(data = aData$data, tree = tree, siteInfo = siteLabels)
+ad <- alleleData(data = aData$dataList, tree = tree, siteInfo = siteLabels)
 ```
 
 Now create a rate model containing the data from the alleleData object, and providing the linear formulas for the rate and pi link functions (note that if no piFormula is supplied it defaults to using the same one as the rate formula).
 
 ```{r build_rateModel,results="hide"}
+## Set the rate parameter formula
+rateFormula <- formula(~ cre.class + logXpress + 0)
+## Set rate bounds
+rBounds <- c(10^-2, 10)
+## Build rateModel
 rateMod <- rateModel(data = ad, rateFormula = rateFormula, rateBounds = rBounds)
 ```
 
