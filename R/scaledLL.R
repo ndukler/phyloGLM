@@ -9,35 +9,37 @@
 #' @name scaledLL
 #' @include rateModel-class.R
 #' @rdname scaledLL
-methods::setGeneric("scaledLL", function(x,model,scale=1,threads=1,...) {
+methods::setGeneric("scaledLL", function(x, model, scale = 1, threads = 1, ...) {
   standardGeneric("scaledLL")
 })
 
 
 #' @name scaledLL
 #' @rdname scaledLL
-methods::setMethod("scaledLL", signature(x="missing",model = "rateModel"), function(x,model,scale=1,threads=1) {
-  l=model@phylogeny$ll(model@alleleData$alleleData@data@x,
-                       model@rateDM@x,
-                       model@piDM@x,scale,threads)
-  if(is.nan(l)){
-    warning("NaN value for LL with parameters: ",paste(getParams(model),collapse = ","),"\n")
-  } else if (is.infinite(l)){
-    warning("Inf value for LL with parameters: ",paste(getParams(model),collapse = ","),"\n")
+methods::setMethod("scaledLL", signature(x = "missing", model = "rateModel"), function(x, model, scale = 1, threads = 1) {
+  l <- model@phylogeny$ll(
+    model@alleleData$alleleData@data@x,
+    model@rateDM@x,
+    model@piDM@x, scale, threads
+  )
+  if (is.nan(l)) {
+    warning("NaN value for LL with parameters: ", paste(getParams(model), collapse = ","), "\n")
+  } else if (is.infinite(l)) {
+    warning("Inf value for LL with parameters: ", paste(getParams(model), collapse = ","), "\n")
   }
   return(l)
 })
 
 #' @name scaledLL
 #' @rdname scaledLL
-methods::setMethod("scaledLL", signature(x="numeric",model = "rateModel"), function(x,model,scale=1,threads=1) {
+methods::setMethod("scaledLL", signature(x = "numeric", model = "rateModel"), function(x, model, scale = 1, threads = 1) {
   ## Save initial parameter values
-  initP=getParams(model)
-  setParams(model,x,which(!model@fixed)-1)
+  initP <- getParams(model)
+  setParams(model, x, which(!model@fixed) - 1)
   ## Evaluate LL
-  l=scaledLL(model=model,scale=scale,threads=threads)
+  l <- scaledLL(model = model, scale = scale, threads = threads)
   ## Restore original parameter values
-  setParams(model,initP,(1:length(initP))-1)
+  setParams(model, initP, (1:length(initP)) - 1)
   return(l)
 })
 
@@ -52,19 +54,19 @@ methods::setMethod("scaledLL", signature(x="numeric",model = "rateModel"), funct
 #' @include rateModel-class.R
 #' @rdname ll
 #' @export
-methods::setGeneric("ll", function(x,model,threads=1,...) {
+methods::setGeneric("ll", function(x, model, threads = 1, ...) {
   standardGeneric("ll")
 })
 
 
 #' @name ll
 #' @rdname ll
-methods::setMethod("ll", signature(x="missing",model = "rateModel"), function(x,model,threads=1) {
-  return(scaledLL(model=model,scale=1,threads=threads))
+methods::setMethod("ll", signature(x = "missing", model = "rateModel"), function(x, model, threads = 1) {
+  return(scaledLL(model = model, scale = 1, threads = threads))
 })
 
 #' @name ll
 #' @rdname ll
-methods::setMethod("ll", signature(x="numeric",model = "rateModel"), function(x,model,threads=1) {
-  return(scaledLL(x=x,model=model,scale=1,threads=threads))
+methods::setMethod("ll", signature(x = "numeric", model = "rateModel"), function(x, model, threads = 1) {
+  return(scaledLL(x = x, model = model, scale = 1, threads = threads))
 })

@@ -9,15 +9,15 @@
 #' @name phyloGrad
 #' @include rateModel-class.R
 #' @rdname phyloGrad
-methods::setGeneric("phyloGrad", function(x,model,scale=1,eps=.Machine$double.eps,threads=1) {
+methods::setGeneric("phyloGrad", function(x, model, scale = 1, eps = .Machine$double.eps, threads = 1) {
   standardGeneric("phyloGrad")
 })
 
 
 #' @name phyloGrad
 #' @rdname phyloGrad
-methods::setMethod("phyloGrad", signature(x="missing",model = "rateModel"), function(x,model,scale=1,
-                                                                                     eps=.Machine$double.eps,threads=1) {
+methods::setMethod("phyloGrad", signature(x = "missing", model = "rateModel"), function(x, model, scale = 1,
+                                                                                        eps = .Machine$double.eps, threads = 1) {
   # ## Get initial parameters
   # x=getParams(model)
   # ## Calculate stepsize for optimal finite gradient approximation
@@ -46,16 +46,18 @@ methods::setMethod("phyloGrad", signature(x="missing",model = "rateModel"), func
   # }
   # ## Compute Gradients
   # g=(f_plus-f_minus)/h_reals
-  g=model@phylogeny$grad(model@alleleData$alleleData@data@x,
-                         model@rateDM@x,
-                         model@piDM@x,scale,threads)[!model@fixed]
+  g <- model@phylogeny$grad(
+    model@alleleData$alleleData@data@x,
+    model@rateDM@x,
+    model@piDM@x, scale, threads
+  )[!model@fixed]
   return(g)
 })
 
 #' @name phyloGrad
 #' @rdname phyloGrad
-methods::setMethod("phyloGrad", signature(x="numeric",model = "rateModel"), function(x,model,scale=1,
-                                                                                     eps=.Machine$double.eps,threads=1){
-  setParams(model,x,which(!model@fixed)-1)
-  return(phyloGrad(model=model,scale=scale,eps=eps,threads=threads))
+methods::setMethod("phyloGrad", signature(x = "numeric", model = "rateModel"), function(x, model, scale = 1,
+                                                                                        eps = .Machine$double.eps, threads = 1) {
+  setParams(model, x, which(!model@fixed) - 1)
+  return(phyloGrad(model = model, scale = scale, eps = eps, threads = threads))
 })

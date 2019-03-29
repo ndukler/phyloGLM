@@ -2,7 +2,7 @@
 #'
 #' Simulates data without an error model
 #' @param tr tree
-#' @param covariateTable a data.frame where each column is a covariate and each row 
+#' @param covariateTable a data.frame where each column is a covariate and each row
 #' is a site (columns have covariate names)
 #' @param rateFormula a formula object specifying how covariates are combined to compute the rate
 #' @param rateParams a matrix of parameters where the columns correspond to the covariate label and the rows are
@@ -17,124 +17,130 @@
 #' @return list with the simulated data and the number of alleles
 #' @export
 
-simulateSites <- function(tr,covariateTable,rateFormula,rateParams=NULL,piFormula=NULL,piParams=NULL,
-                          lineageTable=NULL,rateBounds=c(10^-4,5)){
+simulateSites <- function(tr, covariateTable, rateFormula, rateParams = NULL, piFormula = NULL, piParams = NULL,
+                          lineageTable = NULL, rateBounds = c(10^-4, 5)) {
   ## **Start parameter tests**
-  
+
   ## Check if piFormula is specified. If not, set to same as rateFormula
-  if(is.null(piFormula)){
-    piFormula=rateFormula
+  if (is.null(piFormula)) {
+    piFormula <- rateFormula
   }
-  
+
   ## Create default lineageTable and perform checks if it is already specified
-  if(is.null(lineageTable)){
-    lineageTable=data.table::data.table(parent=tr$edge[,1],child=tr$edge[,2],edgeGroup=1)
-  } else if (!is.data.frame(lineageTable) || colnames(lineageTable) != c("parent","child","edgeGroup")) {
+  if (is.null(lineageTable)) {
+    lineageTable <- data.table::data.table(parent = tr$edge[, 1], child = tr$edge[, 2], edgeGroup = 1)
+  } else if (!is.data.frame(lineageTable) || colnames(lineageTable) != c("parent", "child", "edgeGroup")) {
     stop("lineageTable must be a data.frame with colnames: parent, child, edgeGroup")
-  } else if (!is.integer(lineageTable$edgeGroup)){
+  } else if (!is.integer(lineageTable$edgeGroup)) {
     stop("edgeGroup must be integer valued.")
-  } else if (nrow(lineageTable) != nrow(tr$edge)){
+  } else if (nrow(lineageTable) != nrow(tr$edge)) {
     stop("lineageTable and the tree must contain the same number of edges")
-  } else if (any(as.matrix(lineageTable[order(child),.(parent,child)])!=tr$edge[order(tr$edge[,2]),])){
+  } else if (any(as.matrix(lineageTable[order(child), .(parent, child)]) != tr$edge[order(tr$edge[, 2]), ])) {
     stop("lineageTable and the specified tree have one or more different parent-child edges.")
   }
-  
-  ## Warn user if the formula contains an intercept and provide info on how to avoid 
-  if(attr(terms(rateFormula),"intercept")!=0){
+
+  ## Warn user if the formula contains an intercept and provide info on how to avoid
+  if (attr(terms(rateFormula), "intercept") != 0) {
     warning("rateFormula has an intercept term. To prevent this specify formula with +0 at the end.")
   }
-  if(attr(terms(piFormula),"intercept")!=0){
+  if (attr(terms(piFormula), "intercept") != 0) {
     warning("piFormula has an intercept term. To prevent this specify formula with +0 at the end.")
   }
   ## Check that the covariate table has all variables required by the formulas
-  if(!all(all.vars(rateFormula) %in% colnames(covariateTable))){
-    missing=setdiff(all.vars(rateFormula),colnames(covariateTable))
-    stop(paste("Covariates in the rate formula missing from the covariate table:",paste(missing,collapse = ",")))
+  if (!all(all.vars(rateFormula) %in% colnames(covariateTable))) {
+    missing <- setdiff(all.vars(rateFormula), colnames(covariateTable))
+    stop(paste("Covariates in the rate formula missing from the covariate table:", paste(missing, collapse = ",")))
   }
-  if(!all(all.vars(piFormula) %in% colnames(covariateTable))){
-    missing=setdiff(all.vars(piFormula),colnames(covariateTable))
-    stop(paste("Covariates in the pi formula missing from the covariate table:",paste(missing,collapse = ",")))
+  if (!all(all.vars(piFormula) %in% colnames(covariateTable))) {
+    missing <- setdiff(all.vars(piFormula), colnames(covariateTable))
+    stop(paste("Covariates in the pi formula missing from the covariate table:", paste(missing, collapse = ",")))
   }
-  
+
   ## Check that rate bounds are valid
-  if(!length(rateBounds)==2 || !is.numeric(rateBounds)){
+  if (!length(rateBounds) == 2 || !is.numeric(rateBounds)) {
     stop("rateBounds must be a numeric vector of length 2")
-  } else if (!all(is.finite(rateBounds)) || any(rateBounds<=0)){
+  } else if (!all(is.finite(rateBounds)) || any(rateBounds <= 0)) {
     stop("rateBounds must be finite and greater than 0")
-  } else if (! rateBounds[1] < rateBounds[2]){
+  } else if (!rateBounds[1] < rateBounds[2]) {
     stop("rateBounds[1] must be less than rateBounds[2]")
   }
-  
+
   ## Check that the form of the parameter matricies are correct
-  nFeaturesRate=ncol(model.matrix(rateFormula,head(covariateTable,1)))
-  rateFeaturesNames=colnames(model.matrix(rateFormula,head(covariateTable,1)))
-  nFeaturesPi=ncol(model.matrix(piFormula,head(covariateTable,1)))
-  piFeaturesNames=colnames(model.matrix(rateFormula,head(covariateTable,1)))
-  nEdgeGroup=length(unique(lineageTable$edgeGroup))
-  if(is.null(rateParams)){
-    rateParams=matrix(1,ncol = nFeaturesPi , nrow = 1)
-  } else if (!is.matrix(rateParams) ||!is.numeric(rateParams)){
+  nFeaturesRate <- ncol(model.matrix(rateFormula, head(covariateTable, 1)))
+  rateFeaturesNames <- colnames(model.matrix(rateFormula, head(covariateTable, 1)))
+  nFeaturesPi <- ncol(model.matrix(piFormula, head(covariateTable, 1)))
+  piFeaturesNames <- colnames(model.matrix(rateFormula, head(covariateTable, 1)))
+  nEdgeGroup <- length(unique(lineageTable$edgeGroup))
+  if (is.null(rateParams)) {
+    rateParams <- matrix(1, ncol = nFeaturesPi, nrow = 1)
+  } else if (!is.matrix(rateParams) || !is.numeric(rateParams)) {
     stop("rateParams must be a numeric matrix")
-  } else if (ncol(rateParams)!=nFeaturesRate){
-    stop(paste0("ncol(rateParams) must equal the number of coefficients in the formula (",nFeaturesRate,"):\n",
-                paste(rateFeaturesNames,collapse = ",")))
-  } else if(nrow(rateParams) != nEdgeGroup){
+  } else if (ncol(rateParams) != nFeaturesRate) {
+    stop(paste0(
+      "ncol(rateParams) must equal the number of coefficients in the formula (", nFeaturesRate, "):\n",
+      paste(rateFeaturesNames, collapse = ",")
+    ))
+  } else if (nrow(rateParams) != nEdgeGroup) {
     stop("The number of rows in the rateParams matrix must be equal to the number of edgeGroups in the lineageTable")
   }
-  if(is.null(piParams)){
-    piParams=matrix(1,ncol = nFeaturesPi , nrow = 1)
-  } else if (!is.matrix(piParams) ||!is.numeric(piParams) || ncol(piParams)!=nFeaturesPi){
-    stop(paste0("ncol(piParams) must equal the number of coefficients in the formula (",nFeaturesPi,"): \n ",
-                paste(piFeaturesNames,collapse = ",")))
+  if (is.null(piParams)) {
+    piParams <- matrix(1, ncol = nFeaturesPi, nrow = 1)
+  } else if (!is.matrix(piParams) || !is.numeric(piParams) || ncol(piParams) != nFeaturesPi) {
+    stop(paste0(
+      "ncol(piParams) must equal the number of coefficients in the formula (", nFeaturesPi, "): \n ",
+      paste(piFeaturesNames, collapse = ",")
+    ))
   }
-  
-  ## **End parameter tests** 
-  
+
+  ## **End parameter tests**
+
   ## Get number of sites
-  nSites=nrow(covariateTable)
-  
+  nSites <- nrow(covariateTable)
+
   ## Augment piParams with base allele level
-  piParamsAug=rbind(matrix(0,ncol=nFeaturesPi),piParams)
-  
+  piParamsAug <- rbind(matrix(0, ncol = nFeaturesPi), piParams)
+
   ## Create the feature tables
-  rateFeatureTable=model.matrix(rateFormula,covariateTable)
-  piFeatureTable=model.matrix(rateFormula,covariateTable)
-  
+  rateFeatureTable <- model.matrix(rateFormula, covariateTable)
+  piFeatureTable <- model.matrix(rateFormula, covariateTable)
+
   ## Ensure lineageTable edge groups have contiguous integer values starting at 1
-  lineageTable[,edgeGroup:=as.integer(as.factor(edgeGroup))]
-  
+  lineageTable[, edgeGroup := as.integer(as.factor(edgeGroup))]
+
   ## compute pi for all sites
-  piAll=exp(-piFeatureTable %*%  t(piParamsAug))/rowSums(exp(-piFeatureTable %*%  t(piParamsAug)))
-  nAlleles=ncol(piAll)  
+  piAll <- exp(-piFeatureTable %*% t(piParamsAug)) / rowSums(exp(-piFeatureTable %*% t(piParamsAug)))
+  nAlleles <- ncol(piAll)
   ## Create rate parameter matrix where col = branch parameters and row = coefficients
-  branchRateParams=apply(tr$edge, 1, function(x) rateParams[lineageTable[child==x[2]]$edgeGroup,])
+  branchRateParams <- apply(tr$edge, 1, function(x) rateParams[lineageTable[child == x[2]]$edgeGroup, ])
   ## Compute the rate for all sites
-  rateMin=rateBounds[1]
-  rateMax=rateBounds[2]
-  branchRateMix=1/(1+exp(-rateFeatureTable %*% branchRateParams))
-  branchRateAll=((1-branchRateMix)*rateMin)+((branchRateMix)*rateMax)
+  rateMin <- rateBounds[1]
+  rateMax <- rateBounds[2]
+  branchRateMix <- 1 / (1 + exp(-rateFeatureTable %*% branchRateParams))
+  branchRateAll <- ((1 - branchRateMix) * rateMin) + ((branchRateMix) * rateMax)
 
   ## Create matrix to hold simulated data
-  simDat=matrix(nrow = nSites,ncol=length(tr$tip.label))
-  colnames(simDat)=tr$tip.label
-    
+  simDat <- matrix(nrow = nSites, ncol = length(tr$tip.label))
+  colnames(simDat) <- tr$tip.label
+
   ## Simulate data for each site
-  for(i in 1:nSites){
-    sitePi=piAll[i,]
+  for (i in 1:nSites) {
+    sitePi <- piAll[i, ]
     ## Normalize the rate
-    temp=matrix(1,ncol=nAlleles,nrow = nAlleles)
-    diag(temp)=0
-    Q=temp %*% diag(sitePi) ## constuction that guarentees detailed balance: pi_i*q_ij = pi_j*q_ji
-    diag(Q)=-rowSums(Q)
-    normRate=branchRateAll[i,]/sum(-diag(Q)*sitePi)
+    temp <- matrix(1, ncol = nAlleles, nrow = nAlleles)
+    diag(temp) <- 0
+    Q <- temp %*% diag(sitePi) ## constuction that guarentees detailed balance: pi_i*q_ij = pi_j*q_ji
+    diag(Q) <- -rowSums(Q)
+    normRate <- branchRateAll[i, ] / sum(-diag(Q) * sitePi)
     ## Rescale tree edges
-    trRescale=tr
-    trRescale$edge.length=tr$edge.length*normRate
+    trRescale <- tr
+    trRescale$edge.length <- tr$edge.length * normRate
     ## Simulate data for site i
-    simDat[i,] <- ape::rTraitDisc(phy = trRescale,rate=1,k = length(sitePi),freq=sitePi,ancestor = FALSE,
-                                  root.value = sample(x=1:length(sitePi),size = 1,prob = sitePi))
+    simDat[i, ] <- ape::rTraitDisc(
+      phy = trRescale, rate = 1, k = length(sitePi), freq = sitePi, ancestor = FALSE,
+      root.value = sample(x = 1:length(sitePi), size = 1, prob = sitePi)
+    )
   }
-  rm(piAll,branchRateParams)
-  aData=disCharToProb(simDat,charLevels=1:nAlleles)
-  return(list(data=aData,nAlleles=nAlleles))
+  rm(piAll, branchRateParams)
+  aData <- disCharToProb(simDat, charLevels = 1:nAlleles)
+  return(list(data = aData, nAlleles = nAlleles))
 }

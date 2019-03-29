@@ -12,13 +12,15 @@
 #' @slot fixed a logical vector indicating which variables are fixed
 #'
 #' @name packedModel-class
-#' @rdname packedModel-class 
+#' @rdname packedModel-class
 #' @importClassesFrom data.table data.table
 #' @exportClass packedModel
-methods::setClass("packedModel", slots=c(tree = "ANY",data="list",
-                                       siteInfo="data.table",rateFormula="formula",piFormula="formula",
-                                       lineageTable="data.table",params="numeric",fixed="logical",
-                                       rateBounds="numeric"))
+methods::setClass("packedModel", slots = c(
+  tree = "ANY", data = "list",
+  siteInfo = "data.table", rateFormula = "formula", piFormula = "formula",
+  lineageTable = "data.table", params = "numeric", fixed = "logical",
+  rateBounds = "numeric"
+))
 
 #' Pack rateModel
 #'
@@ -39,22 +41,24 @@ methods::setGeneric("pack", function(model) {
 #' @rdname pack
 methods::setMethod("pack", signature(model = "rateModel"), function(model) {
   ## Extract all the objects needed to rebuild the alleleData object
-  ad=getAlleleData(model)
-  tree=getTree(ad)
-  dat=ad@data[1:ad@data@nrow,]
-  a=rep(tree$tip.label,each=ad@nAlleles)
-  data=lapply(split(seq_along(a), a)[tree$tip.label], function(ind, m) m[,ind], m = dat)
+  ad <- getAlleleData(model)
+  tree <- getTree(ad)
+  dat <- ad@data[1:ad@data@nrow, ]
+  a <- rep(tree$tip.label, each = ad@nAlleles)
+  data <- lapply(split(seq_along(a), a)[tree$tip.label], function(ind, m) m[, ind], m = dat)
   rm(dat)
-  siteInfo=ad@siteInfo
+  siteInfo <- ad@siteInfo
   ## Extract all the objects needed to rebuild the rateModel object
-  rateFormula=model@rateFormula
-  piFormula=model@piFormula
-  lineageTable=model@edgeGroups
-  params=getParams(model)
-  fixed=model@fixed
-  rateBounds=getRateBounds(model)  
-  return(new("packedModel",tree=tree,data=data,siteInfo=siteInfo,rateFormula=rateFormula,piFormula=piFormula,
-             lineageTable=lineageTable,params=params,fixed=fixed,rateBounds=rateBounds))
+  rateFormula <- model@rateFormula
+  piFormula <- model@piFormula
+  lineageTable <- model@edgeGroups
+  params <- getParams(model)
+  fixed <- model@fixed
+  rateBounds <- getRateBounds(model)
+  return(new("packedModel",
+    tree = tree, data = data, siteInfo = siteInfo, rateFormula = rateFormula, piFormula = piFormula,
+    lineageTable = lineageTable, params = params, fixed = fixed, rateBounds = rateBounds
+  ))
 })
 
 #' Unpack rateModel
@@ -76,8 +80,10 @@ methods::setGeneric("unpack", function(pm) {
 #' @rdname unpack
 methods::setMethod("unpack", signature(pm = "packedModel"), function(pm) {
   ## Build a rate model object
-  r=rateModel(data = alleleData(pm@data,pm@tree,pm@siteInfo,logProb = TRUE),rateFormula = pm@rateFormula,
-            piFormula = pm@piFormula,lineageTable = pm@lineageTable,rateBounds = pm@rateBounds)
-  setParams(r,pm@params,(1:length(pm@params))-1)
+  r <- rateModel(
+    data = alleleData(pm@data, pm@tree, pm@siteInfo, logProb = TRUE), rateFormula = pm@rateFormula,
+    piFormula = pm@piFormula, lineageTable = pm@lineageTable, rateBounds = pm@rateBounds
+  )
+  setParams(r, pm@params, (1:length(pm@params)) - 1)
   return(r)
 })

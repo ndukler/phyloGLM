@@ -1,6 +1,6 @@
 #' Replace default print format
 #'
-#' Method to replace default print appearance for 
+#' Method to replace default print appearance for
 #' @param object alleleData or rateModel object
 #' @name show
 #' @include alleleData-class.R
@@ -16,6 +16,6 @@ methods::setMethod("show", "alleleData", function(object) {
 
 #' @name show
 #' @rdname show
-methods::setMethod("show",  "rateModel", function(object) {
+methods::setMethod("show", "rateModel", function(object) {
   print(str(object))
 })

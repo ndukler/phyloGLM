@@ -7,14 +7,14 @@
 #' @rdname setParams
 #' @name setParams
 #' @include rateModel-class.R
-#' @export 
-methods::setGeneric("setParams", function(obj,x,index) {
+#' @export
+methods::setGeneric("setParams", function(obj, x, index) {
   standardGeneric("setParams")
 })
 
 #' @name setParams
 #' @rdname setParams
-#' @aliases setParams,rateModel,rateModel-method 
-methods::setMethod("setParams", signature(obj = "rateModel"), function(obj,x,index) {
-  return(obj@phylogeny$setParams(x,index))
+#' @aliases setParams,rateModel,rateModel-method
+methods::setMethod("setParams", signature(obj = "rateModel"), function(obj, x, index) {
+  return(obj@phylogeny$setParams(x, index))
 })
