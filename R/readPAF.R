@@ -5,7 +5,7 @@
 #' @name readPAF
 #' @return a list of allele probability matricies and a list of the site labels for each row of the matrix
 #' @export
-readPAF <- function(f, subset) {
+readPAF <- function(f, subset=NULL) {
   ## Check that file exists
   if (!file.exists(f)) {
     stop(paste("File", f, "does not exist"))
@@ -19,7 +19,9 @@ readPAF <- function(f, subset) {
     stop("The first two columns of a PAF file must be \'site\' and \'species\' respectively.")
   }
   ## Read in file
-  d <- data.table::fread(f, key = c("site"))
+  d <- data.table::fread(f)
+  d[,site := as.character(site)]
+  data.table::setkey(d,"site")
   ## Check that all sites are present for all species
   allSites <- unique(d$site)
   dCheck <- d[, setequal(site, allSites), by = "species"]
@@ -28,7 +30,7 @@ readPAF <- function(f, subset) {
   }
   ## Subset sites if needed
   if (!is.null(subset)) {
-    d <- d[subset]
+    d <- d[as.character(subset)]
   }
   finalSites <- unique(d$site)
   ## Convert to species indexed list
