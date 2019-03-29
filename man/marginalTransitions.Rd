@@ -11,7 +11,7 @@
 \item{threads}{number of threads to use}
 }
 \value{
-a list of per node/edge matricies containing the expected number of allelic transitions. The 
+a list of per node/edge matricies containing the expected number of allelic transitions. The
 rows are the ancestral allele and the columns are the descendant allele
 }
 \description{

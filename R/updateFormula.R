@@ -4,6 +4,7 @@
 #' @param model a rateModel object
 #' @param rateFormula a new rate formula
 #' @param piFormula a new pi formula
+#' @name updateFormula
 #' @include rateModel-class.R
 #' @rdname updateFormula
 #' @return a copy of the rateModel object with updated formulas (matching parameters carry over values)
@@ -43,4 +44,5 @@ methods::setMethod("updateFormula", signature(model = "rateModel"), function(mod
   ## Set parameters to matched values
   setParams(obj = r, x = mergedRateIndex$value, index = mergedRateIndex$idx)
   setParams(obj = r, x = mergedPiIndex$value, index = mergedPiIndex$idx)
+  return(r)
 })

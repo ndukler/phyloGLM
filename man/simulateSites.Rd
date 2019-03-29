@@ -11,7 +11,7 @@ simulateSites(tr, covariateTable, rateFormula, rateParams = NULL,
 \arguments{
 \item{tr}{tree}
 
-\item{covariateTable}{a data.frame where each column is a covariate and each row 
+\item{covariateTable}{a data.frame where each column is a covariate and each row
 is a site (columns have covariate names)}
 
 \item{rateFormula}{a formula object specifying how covariates are combined to compute the rate}

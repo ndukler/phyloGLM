@@ -22,37 +22,41 @@ library(data.table)
 ## Set seed for consistency
 set.seed(123)
 ## Set some parameters for the simulation
-species=c("A","B","C","D","E")
-nAlleles=3
-nSites=1000
+species <- c("A", "B", "C", "D", "E")
+nAlleles <- 3
+nSites <- 1000
 
 ## Create test trees, both one that will fail, and one that will pass
-tree=ape::rtree(n = length(species),tip.label = species)
+tree <- ape::rtree(n = length(species), tip.label = species)
 
 ## Create a covariate data.frame with labels
-siteLabels=data.frame(cre.class=factor(rep(c("Enhancer","Promoter"),times=c(3/4*nSites,1/4*nSites))),
-                      logXpress = rnorm(n = nSites, mean = 0 , sd = 1))
+siteLabels <- data.frame(
+  cre.class = factor(rep(c("Enhancer", "Promoter"), times = c(3 / 4 * nSites, 1 / 4 * nSites))),
+  logXpress = rnorm(n = nSites, mean = 0, sd = 1)
+)
 ## Set the rate parameter formula
-rateFormula = formula(~cre.class+logXpress+0)
+rateFormula <- formula(~ cre.class + logXpress + 0)
 ## Set parameter values
-rateParams=matrix(c(-1,-4.5,-3.3),nrow=1)
-piParams=matrix(c(0.3,0.1,0,0,-0.1,0.5),nrow=2,ncol=3,byrow = T)
+rateParams <- matrix(c(-1, -4.5, -3.3), nrow = 1)
+piParams <- matrix(c(0.3, 0.1, 0, 0, -0.1, 0.5), nrow = 2, ncol = 3, byrow = T)
 ## Rate bounds
-rBounds=c(10^-2,10)
+rBounds <- c(10^-2, 10)
 ## Simulate data
-aData=simulateSites(tr=tree,covariateTable = siteLabels,rateFormula = rateFormula, rateParams = rateParams,
-                    piParams = piParams,rateBounds = rBounds)
+aData <- simulateSites(
+  tr = tree, covariateTable = siteLabels, rateFormula = rateFormula, rateParams = rateParams,
+  piParams = piParams, rateBounds = rBounds
+)
 ```
 Now create the allele data object:
 
 ```{r build_allele_data,results="hide"}
-ad=alleleData(data=aData$data,tree=tree,siteInfo = siteLabels)
+ad <- alleleData(data = aData$data, tree = tree, siteInfo = siteLabels)
 ```
 
 Now create a rate model containing the data from the alleleData object, and providing the linear formulas for the rate and pi link functions (note that if no piFormula is supplied it defaults to using the same one as the rate formula).
 
 ```{r build_rateModel,results="hide"}
-rateMod=rateModel(data = ad,rateFormula=rateFormula,rateBounds = rBounds)
+rateMod <- rateModel(data = ad, rateFormula = rateFormula, rateBounds = rBounds)
 ```
 
 ## phyloGLM is multithreaded
@@ -60,101 +64,105 @@ rateMod=rateModel(data = ad,rateFormula=rateFormula,rateBounds = rBounds)
 Note that the likelihood calculations in this package scale well when parallelized up to one or two less than the number of available threads on your system. The "threads" argument can also be used with several other functions, including the fit function to speed up model fitting.
 
 ```{r benchmark,fig.width=4, fig.height=4}
-m=microbenchmark::microbenchmark(ll(model = rateMod,threads = 1),
-                               ll(model = rateMod,threads = 2),
-                               ll(model = rateMod,threads = 3))
-m=as.data.frame(m)
-ggplot(m,aes(x=factor(as.numeric(m$expr)),y=time/10^6))+
-  geom_boxplot()+
-  ylab("Time for log-likelihood evaluation (ms)")+
-  xlab("Threads")+
-  ylim(0,max(m$time/10^6))
+m <- microbenchmark::microbenchmark(
+  ll(model = rateMod, threads = 1),
+  ll(model = rateMod, threads = 2),
+  ll(model = rateMod, threads = 3)
+)
+m <- as.data.frame(m)
+ggplot(m, aes(x = factor(as.numeric(m$expr)), y = time / 10^6)) +
+  geom_boxplot() +
+  ylab("Time for log-likelihood evaluation (ms)") +
+  xlab("Threads") +
+  ylim(0, max(m$time / 10^6))
 ```
 
 ## Fitting and analysing a rateModel
 
 Now we can fit the model:
 ```{r fit_model}
-fitted_status<-fit(model = rateMod,threads=3)
+fitted_status <- fit(model = rateMod, threads = 3)
 ```
 
 Once fitted we can extract the parameters, we can use the estimated hessiantheir approximate standard errors and plot them. The rate parameters are fairly straightforward to interper, coefficients which are greater than zero are associated with an increased turnover rate, while coefficients less than zero are associated with a decreased turnover rate. The allelic parameters are more difficult to interpert, but essentially for a coefficient $\beta_{ij}>0$ where $i$ is the allele and $j$ is the feature, feature $j$ is positively correlated with an increased frequency of allele $i$ relative to the base allele.  
 
 ```{r plot_coefficients, fig.width=7, fig.height=4}
-seTab=se(rateMod,fitted_status$hessian)
-param_plots=plotParams(seTab)
-plot_grid(param_plots[[1]]+theme(axis.text.x = element_text(angle=45,hjust=1)),
-          param_plots[[2]]+theme(axis.text.x = element_text(angle=45,hjust=1)),align = "h")
+seTab <- se(rateMod, fitted_status$hessian)
+param_plots <- plotParams(seTab)
+plot_grid(param_plots[[1]] + theme(axis.text.x = element_text(angle = 45, hjust = 1)),
+  param_plots[[2]] + theme(axis.text.x = element_text(angle = 45, hjust = 1)),
+  align = "h"
+)
 ```
 
 Because of the way the rate is parameterized, the exact values of the rate coefficients depend heavily on the upper and lower bounds for the rate (although the relative impacts are still interpertable). Thus it can be valuable to view the marginal distribution of rate estimates with respect each covariate. If we want to see the distribution of rates for specific covariate values we can compute the rates at desired sites for all edgeGroups and plot them. From this we can see the behavior of the rates with respect to the covariates on the data.
 ```{r marginal_rate_plots ,fig.width=7, fig.height=3.5}
 ## Compute the rate distribution
-rDist=rates(rateMod)
+rDist <- rates(rateMod)
 ## Extract the site information
-si=getSiteInfo(rateMod)
-si[,site:=1:nrow(.SD)]
+si <- getSiteInfo(rateMod)
+si[, site := 1:nrow(.SD)]
 ## Merge the rates and the site information
-rMerged=merge(si,rDist,by="site")
+rMerged <- merge(si, rDist, by = "site")
 ## Plot rate dsitribution, split by enhancers and promoters
-g1=ggplot(rMerged,aes(x=cre.class,y=rate,fill=factor(edgeGroup)))+
-  geom_boxplot(notch = TRUE)+
-  theme(legend.position="bottom")
-g2=ggplot(rMerged,aes(x=logXpress,y=rate,fill=factor(edgeGroup)))+
-  geom_point()+
-  theme(legend.position="bottom")
-plot_grid(g1,g2,align = "h")
+g1 <- ggplot(rMerged, aes(x = cre.class, y = rate, fill = factor(edgeGroup))) +
+  geom_boxplot(notch = TRUE) +
+  theme(legend.position = "bottom")
+g2 <- ggplot(rMerged, aes(x = logXpress, y = rate, fill = factor(edgeGroup))) +
+  geom_point() +
+  theme(legend.position = "bottom")
+plot_grid(g1, g2, align = "h")
 ```
 
 We can also compute the number of turnover events, both per site and plot those and a function of the covariates.
 ```{r turnover_plots,fig.width=7, fig.height=3.5}
 ## Compute expected number of transitions
-et=marginalTransitions(rateMod,aggregate="node")
+et <- marginalTransitions(rateMod, aggregate = "node")
 ## Place data in plottable table and merge with covariates
-dat=rbindlist(lapply(et,function(x) as.data.table(melt(x))),idcol = "site")
-setnames(dat,c("Var1","Var2"),c("Anc","Dec"))
-dat[,turnover:=paste0(Anc,"->",Dec)]
-tDat=merge(si,dat,by="site")
+dat <- rbindlist(lapply(et, function(x) as.data.table(melt(x))), idcol = "site")
+setnames(dat, c("Var1", "Var2"), c("Anc", "Dec"))
+dat[, turnover := paste0(Anc, "->", Dec)]
+tDat <- merge(si, dat, by = "site")
 ## Only keep elements that change allele (e.g. not 1-> 1)
-tDat=tDat[Anc!=Dec]
-tDat[,leDisc:=cut(logXpress,breaks = quantile(logXpress,probs = seq(0,1,0.2)),include.lowest = TRUE)]
-# create boxplot 
-p1 = ggplot(tDat,aes(x=cre.class,y=value))+
-  geom_boxplot(notch = TRUE,outlier.shape = NA)+
-  theme(legend.position="bottom")+
-  ylab("Expected number of\nturnover events")+
-  ylim(0,3)
-p2 = ggplot(tDat,aes(x=leDisc,y=value))+
-  geom_boxplot(notch = TRUE,outlier.shape = NA)+
-  theme(legend.position="bottom")+
-  ylab("Expected number of\nturnover events")+
-  ylim(0,3)+
-  theme(axis.text.x = element_text(angle=45,hjust=1))+
+tDat <- tDat[Anc != Dec]
+tDat[, leDisc := cut(logXpress, breaks = quantile(logXpress, probs = seq(0, 1, 0.2)), include.lowest = TRUE)]
+# create boxplot
+p1 <- ggplot(tDat, aes(x = cre.class, y = value)) +
+  geom_boxplot(notch = TRUE, outlier.shape = NA) +
+  theme(legend.position = "bottom") +
+  ylab("Expected number of\nturnover events") +
+  ylim(0, 3)
+p2 <- ggplot(tDat, aes(x = leDisc, y = value)) +
+  geom_boxplot(notch = TRUE, outlier.shape = NA) +
+  theme(legend.position = "bottom") +
+  ylab("Expected number of\nturnover events") +
+  ylim(0, 3) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   xlab("Log(Expression)")
-plot_grid(p1,p2,align = "h")
+plot_grid(p1, p2, align = "h")
 ```
 To get explicit p-values for specific parameters we can use the likelihood ratio test (since estimating the standard error via the hessian may not be reliable). To do that we must fit two models, one with (alternate model), and one without (null model) the parameter of interest (in this case the alternate model is the model we previously fit). Note how we are careful to set the formulas for the rate and stationary distributions seperately to ensure that the models differ by only one parameter. The models must also be nested in order for this test to be valid. A small p-value rejects the null model, concluding that the more complex model fits the data better, even given the additional degrees of freedom.
 
 ```{r coefficient_lrt}
-nullFormula = formula(~cre.class+0)
-alternateFormula = formula(~cre.class+logXpress+0)
-rateModNull=rateModel(data = ad,rateFormula=nullFormula,piFormula = alternateFormula)
-fitted_status_alternate=fit(rateModNull,threads = 3)
-lrt_expression=lrt(h0 = rateModNull,hA = rateMod)
+nullFormula <- formula(~ cre.class + 0)
+alternateFormula <- formula(~ cre.class + logXpress + 0)
+rateModNull <- updateFormula(model = rateMod, rateFormula = nullFormula, piFormula = alternateFormula)
+fitted_status_alternate <- fit(rateModNull, threads = 3)
+lrt_expression <- lrt(h0 = rateModNull, hA = rateMod)
 ```
 Models may also be compared usng the baysian information criterion (BIC) which does not require that the models be nested. The lower the BIC the better the model, in other words if BIC(alternate) < BIC(null), we can conclude that the alternate model provides a better fit to the data. In this case we perform BIC(alternate)-BIC(NULL), see a large negative value, and conclude that the alternate model is better.  
 
 ```{r bic}
-bic(rateMod)-bic(rateModNull)
+bic(rateMod) - bic(rateModNull)
 ```
 
 ## Saving a rateModel for later exploration
 Lastly you can save any model using a combination of the pack() and saveRDS() functions. The model can then be recreated with the unpack command and you're good to go!
 ```{r saving_model}
-pMod=pack(rateMod)
+pMod <- pack(rateMod)
 ## Saving and reloading the packed model (can use compression as well)
 # saveRDS(object = pMod,file = "~/model.RData.gz",compress = "gzip")
 # pMod=readRDS(file = "~/model.RData.gz")
-rateMod2=unpack(pMod)
+rateMod2 <- unpack(pMod)
 ```
 
