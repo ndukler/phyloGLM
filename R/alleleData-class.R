@@ -94,7 +94,12 @@ alleleData <- function(data, tree, siteInfo = NULL, logProb = FALSE) {
   if (ncol(dataMatrix) != (nAlleles * nSpecies)) {
     stop("The number of columns in the data matrix is not the expected nSpecies*nAlleles")
   }
-
+  
+  ## Check that there are the same number of rows in the covarirate and data matricies
+  if(nrow(dataMatrix)!=nrow(siteInfo)){
+    stop("Differing numbers of sites (rows) in data and siteInfo")
+  }
+  
   ## End checks
 
   ## Get nSites
