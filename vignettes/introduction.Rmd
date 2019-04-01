@@ -1,15 +1,23 @@
 ---
 title: "Introduction to phyloGLM"
-author: "Noah Dukler"
-date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Vignette Title}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+author: "[Noah Dukler](https://github.com/ndukler)"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+mail: "ndukler@cshl.edu"
+twitter: "ndukler"
+github: "ndukler"
+output:
+  epuRate::epurate:
+    toc: TRUE
+    number_sections: FALSE
+    code_folding: "show"
 ---
 
-## Constructing your first rate model
+
+<br><br>
+
+> A standard probablistic phylogenetic model for discrete traits describes a species phylogeny with observed trait values at the tips of the tree and unobserved trait values at the ancestral nodes. In this framework the turnover rate ($\gamma$) describes the rate at which ``mutation'' events happen on the tree, and the allelic stationary distribution ($\pi$) describes the prior on allelic states $s$ at the root of the tree. phyloGLM modifies the standard phylogenetic model by parameterizing $\gamma$ and $\pi$ as functions of a set of genomic covariates. Furthermore, phyloGLM can accommodate probabilistic allele values at the tips of the tree by taking conditional probabilities of the raw data given the allelic state ($P(x|s)$). This can be highly useful in the presence of poor cross species alignments or potential error in calling the trait value.
+
+# Constructing your first rate model
 
 We need several elements to construct a rate model. The first is a tree, which, in this case, we read in from newick format using read.tree from the ape package.
 
@@ -25,6 +33,7 @@ library(ape)
 tree=read.tree(system.file("extdata", "sampleTree.nh", package="phyloGLM"))
 plot(tree)
 ```
+
 Next we need set of covariates. Note that we also included a site id as the first column, this will be useful in a moment.
 ```{r read_covariates, warning=FALSE,message=FALSE}
 ## Read in covarites associated with each site 
@@ -38,7 +47,7 @@ Last we need to read in the allele data. It's easiest to do this when the allele
 writeLines(readLines(system.file("extdata", "samplePAF.txt", package="phyloGLM"),3))
 ```
 
-If in this format, it can be read into the format required to construct and alleleData object using the \code{readPAF()} function as follows. The subset argument guarentees that only the sites of interest are read in and matches their order in the subset vector. We can use value of the \code{siteLabels$site} to ensure the row order of the allele data matches the covariates. 
+If in this format, it can be read into the format required to construct and alleleData object using the readPAF() function as follows. The subset argument guarentees that only the sites of interest are read in and matches their order in the subset vector. We can use value of the siteLabels$site to ensure the row order of the allele data matches the covariates. 
 ```{r read_paf, warning=FALSE,message=FALSE}
 ## Read in allele data
 aData=readPAF(system.file("extdata", "samplePAF.txt", package="phyloGLM"),subset = siteLabels$site)
@@ -60,7 +69,7 @@ rBounds <- c(10^-2, 10)
 rateMod <- rateModel(data = ad, rateFormula = rateFormula, rateBounds = rBounds)
 ```
 
-## phyloGLM is multithreaded
+# phyloGLM is multithreaded
 
 Note that the likelihood calculations in this package scale well when parallelized up to one or two less than the number of available threads on your system. The "threads" argument can also be used with several other functions, including the fit function to speed up model fitting.
 
@@ -78,7 +87,7 @@ ggplot(m, aes(x = factor(as.numeric(m$expr)), y = time / 10^6)) +
   ylim(0, max(m$time / 10^6))
 ```
 
-## Fitting and analysing a rateModel
+# Fitting and analysing a rateModel
 
 Now we can fit the model:
 ```{r fit_model}
@@ -142,6 +151,7 @@ p2 <- ggplot(tDat, aes(x = leDisc, y = value)) +
   xlab("Log(Expression)")
 plot_grid(p1, p2, align = "h")
 ```
+
 To get explicit p-values for specific parameters we can use the likelihood ratio test (since estimating the standard error via the hessian may not be reliable). To do that we must fit two models, one with (alternate model), and one without (null model) the parameter of interest (in this case the alternate model is the model we previously fit). Note how we are careful to set the formulas for the rate and stationary distributions seperately to ensure that the models differ by only one parameter. The models must also be nested in order for this test to be valid. A small p-value rejects the null model, concluding that the more complex model fits the data better, even given the additional degrees of freedom.
 
 ```{r coefficient_lrt}
@@ -157,7 +167,7 @@ Models may also be compared usng the baysian information criterion (BIC) which d
 bic(rateMod) - bic(rateModNull)
 ```
 
-## Saving a rateModel for later exploration
+# Saving a rateModel for later exploration
 Lastly you can save any model using a combination of the pack() and saveRDS() functions. The model can then be recreated with the unpack command and you're good to go!
 ```{r saving_model}
 pMod <- pack(rateMod)

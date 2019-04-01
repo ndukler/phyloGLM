@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/478097/93500aa7ffd64b71ac2ac6e8f23b16ed
+bundleId: https://api.rpubs.com/api/v1/document/478097/93500aa7ffd64b71ac2ac6e8f23b16ed
+url: http://rpubs.com/ndukler/478097
+when: 1553883782.96498
