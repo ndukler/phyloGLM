@@ -148,16 +148,16 @@ rateModel <- function(data, rateFormula, piFormula = NULL, lineageTable = NULL, 
     )
     eRate <- 0.1 * rateBounds[1] + 0.9 * rateBounds[2]
   }
-  w1 <- 1 - (eRate - rateBounds[2]) / (rateBounds[1] - rateBounds[2]) ## Computes required weight from sigmoid
+  w1 <- (rateBounds[1]-eRate) / (rateBounds[1] - rateBounds[2]) ## Computes required weight from sigmoid
   eLinear <- -log((1 / w1) - 1) ## value that beta_1*x_1 + ... + beta_n*x_n must equal
   ## Compute appropriate starting coefficients for each covariate by finding the betas that
   ## minimize the distance between the predicted expected rate (indirectly) per site with
-  ## no intercept allowed
-  modForm <- as.formula(paste0(c("y", as.character(rateFormula), "+0"), collapse = ""))
+  modForm <- as.formula(paste0(c("y", as.character(rateFormula)), collapse = ""))
   fitCoef <- lm(formula = modForm, data = data.table::data.table(y = eLinear, getSiteInfo(data)))
-  ## Set vector of inital params with intercept, if there is one, set to zero
+  ## Set vector of inital params with intercept, if there is one
   initCoef <- rep(0, length(colnames(rateDM)))
-  initCoef[colnames(rateDM) != "(Intercept)"] <- coef(fitCoef)
+  names(initCoef) <- colnames(rateDM)
+  initCoef[colnames(rateDM)] <- coef(fitCoef)
 
   ## Create parameter vector
   params <- c(rep(initCoef, length.out = nrow(rateP)), rep(0, nrow(piP)))
