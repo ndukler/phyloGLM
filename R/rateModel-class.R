@@ -103,14 +103,18 @@ rateModel <- function(data, rateFormula, piFormula = NULL, lineageTable = NULL, 
   adEnviron$alleleData <- data
 
   ## Create the design matrix for the rate variable
-  rateDM <- as.matrix.data.frame(stats::model.frame(rateFormula, getSiteInfo(data),na.action="na.pass"))
+  current.na.action <- options('na.action')
+  options(na.action = 'na.pass')
+  rateDM <- stats::model.matrix(rateFormula, getSiteInfo(data))
   ## Create pi design matrix
   if (isTRUE(all.equal.formula(rateFormula, piFormula))) {
     piDM <- rateDM
   } else {
-    piDM <- as.matrix.data.frame(stats::model.frame(piFormula, getSiteInfo(data),na.action="na.pass"))
+    piDM <- stats::model.matrix(piFormula, getSiteInfo(data))
   }
-
+  options('na.action' = current.na.action$na.action)
+  
+  
   ## Check that all elements in the design matrix are finite
   if (any(!is.finite(rateDM))) {
     stop("Non-numeric/Non-finite elements in the rate design matrix")

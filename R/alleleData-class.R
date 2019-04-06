@@ -49,7 +49,7 @@ alleleData <- function(data, tree, siteInfo = NULL, logProb = FALSE) {
   ## Check that siteInfo is a data.frame (or data.table)
   if (!is.null(siteInfo) && !is.data.frame(siteInfo)) {
     stop("siteInfo must be a data.frame or a data.table")
-  } else {
+  } else if (is.data.frame(siteInfo)) {
     siteInfo <- data.table::as.data.table(siteInfo)
   }
 
