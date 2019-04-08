@@ -122,6 +122,19 @@ rateModel <- function(data, rateFormula, piFormula = NULL, lineageTable = NULL, 
   if (any(!is.finite(piDM))) {
     stop("Non-numeric/Non-finite elements in the pi design matrix")
   }
+  
+  ## Check for columns where all values are identical
+  rateSingular=names(which(apply(rateDM, 2, function(x) length(unique(x))==1)))
+  piSingular=names(which(apply(piDM, 2, function(x) length(unique(x))==1)))
+  rateSingular=rateSingular[rateSingular != "(Intercept)"]
+  piSingular=piSingular[piSingular != "(Intercept)"]
+  
+  if(length(rateSingular) > 0){
+    stop(paste("All entries in column(s)",paste(rateSingular,collapse=", "),"of the rate design matrix are identical. This will cause the fitting to fail."))
+  }
+  if(length(piSingular) > 0){
+    stop(paste("All entries in column(s)",paste(piSingular,collapse=", "),"of the pi design matrix are identical. This will cause the fitting to fail."))
+  }
 
   ## Standardize format for lineageTable and sort by child
   data.table::setcolorder(lineageTable, c("parent", "child", "edgeGroup"))
