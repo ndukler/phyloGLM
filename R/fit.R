@@ -18,7 +18,7 @@ methods::setGeneric("fit", function(model, scale = NULL, method = c("l-bfgs-b", 
 #' 
 #' @export
 methods::setMethod("fit", signature(model = "rateModel"), function(model, scale = -1, method = c("bfgs", "mlsl", "stogo"),
-                                                                   threads = 1, control = list(), log = "log.txt") {
+                                                                   threads = 1, control = list(), log = "optim_log.txt") {
   ## scale defaults to -1/nsites
   if (!is.numeric(scale)) {
     stop("scale must be a numeric value")
@@ -48,39 +48,56 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model, scale 
     cont[[n]] <- control[[n]]
   }
   cont[["trace"]] <- 1
-
-  if (method == "bfgs") {
-    sink(file = log)
-    optMod <- optim(
-      par = getParams(model)[which(!model@fixed)], fn = scaledLL, gr = phyloGrad, model = model, scale = scale,
-      threads = threads, method = "BFGS", hessian = FALSE
-    )
-    sink()
-    setParams(model, optMod$par, which(!model@fixed) - 1)
-    # optMod$counts=optMod$iter
-    optMod$hessian <- numDeriv::hessian(func = ll, x = optMod$par, model = model)
-  } else if (method == "mlsl") {
-    stop("Unimplemented optimization method specified")
-    optMod <- nloptr::mlsl(
-      x0 = getParams(model)[which(!model@fixed)], fn = phyloGLM:::scaledLL, model = model, scale = scale,
-      threads = threads, control = cont, lower = lb, upper = ub
-    )
-    setParams(model, optMod$par, which(!model@fixed) - 1)
-    optMod$hessian <- numDeriv::hessian(func = scaledLL, x = optMod$par, model = model, scale = 1)
-    optMod$counts <- optMod$iter
-  } else if (method == "stogo") {
-    optMod <- nloptr::stogo(
-      x0 = getParams(model)[which(!model@fixed)], fn = phyloGLM:::scaledLL, model = model, scale = scale,
-      threads = threads, lower = lb, upper = ub
-    )
-    setParams(model, optMod$par, which(!model@fixed) - 1)
-    optMod$hessian <- numDeriv::hessian(func = scaledLL, x = optMod$par, model = model, scale = 1)
-    counts <- optMod$iter
-  } else {
-    stop("Invalid optimization method specified")
-  }
-  return(with(optMod, list(
-    value = value, counts = counts, convergence = convergence, message = message,
-    par = optMod$par, hessian = optMod$hessian
-  )))
+  tryCatch( expr = 
+              {
+                if (method == "bfgs") {
+                  sink(file = log)
+                  optMod <- optim(
+                    par = getParams(model)[which(!model@fixed)], fn = scaledLL, gr = phyloGrad, model = model, scale = scale,
+                    threads = threads, method = "BFGS", hessian = FALSE
+                  )
+                  sink()
+                  setParams(model, optMod$par, which(!model@fixed) - 1)
+                  # optMod$counts=optMod$iter
+                  optMod$hessian <- numDeriv::hessian(func = ll, x = optMod$par, model = model)
+                } else if (method == "mlsl") {
+                  stop("Unimplemented optimization method specified")
+                  optMod <- nloptr::mlsl(
+                    x0 = getParams(model)[which(!model@fixed)], fn = phyloGLM:::scaledLL, model = model, scale = scale,
+                    threads = threads, control = cont, lower = lb, upper = ub
+                  )
+                  setParams(model, optMod$par, which(!model@fixed) - 1)
+                  optMod$hessian <- numDeriv::hessian(func = scaledLL, x = optMod$par, model = model, scale = 1)
+                  optMod$counts <- optMod$iter
+                } else if (method == "stogo") {
+                  optMod <- nloptr::stogo(
+                    x0 = getParams(model)[which(!model@fixed)], fn = phyloGLM:::scaledLL, model = model, scale = scale,
+                    threads = threads, lower = lb, upper = ub
+                  )
+                  setParams(model, optMod$par, which(!model@fixed) - 1)
+                  optMod$hessian <- numDeriv::hessian(func = scaledLL, x = optMod$par, model = model, scale = 1)
+                  counts <- optMod$iter
+                } else {
+                  stop("Invalid optimization method specified")
+                }
+                return(with(optMod, list(
+                  value = value, counts = counts, convergence = convergence, message = message,
+                  par = optMod$par, hessian = optMod$hessian
+                )))
+              },
+            error = function(c){
+              suppressWarnings(sink()) ## close any open sinks
+              message(paste("ERROR: ", e))
+              optMod = list()
+            },
+            interrupt= function(c){
+              suppressWarnings(sink()) ## close any open sinks
+              message("Model fitting was interrupted.")
+              optMod = list()
+            },
+            finally = 
+              {
+                suppressWarnings(sink()) ## close any open sinks
+              }
+  )
 })
