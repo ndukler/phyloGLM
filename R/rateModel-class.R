@@ -129,11 +129,15 @@ rateModel <- function(data, rateFormula, piFormula = NULL, lineageTable = NULL, 
   rateSingular=rateSingular[rateSingular != "(Intercept)"]
   piSingular=piSingular[piSingular != "(Intercept)"]
   
-  if(length(rateSingular) > 0){
-    stop(paste("All entries in column(s)",paste(rateSingular,collapse=", "),"of the rate design matrix are identical. This will cause the fitting to fail."))
+  if(nrow(rateDM)!=1){
+    if(length(rateSingular) > 0){
+      stop(paste("All entries in column(s)",paste(rateSingular,collapse=", "),"of the rate design matrix are identical. This will cause the fitting to fail."))
+    }
   }
-  if(length(piSingular) > 0){
-    stop(paste("All entries in column(s)",paste(piSingular,collapse=", "),"of the pi design matrix are identical. This will cause the fitting to fail."))
+  if(nrow(piDM)!=1){
+    if(length(piSingular) > 0){
+      stop(paste("All entries in column(s)",paste(piSingular,collapse=", "),"of the pi design matrix are identical. This will cause the fitting to fail."))
+    }
   }
 
   ## Standardize format for lineageTable and sort by child
