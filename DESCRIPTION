@@ -23,7 +23,8 @@ RcppModules: paramIndex,
 Suggests: 
     testthat,
     knitr,
-    rmarkdown
+    rmarkdown,
+    randomcoloR
 Encoding: UTF-8
 RoxygenNote: 6.1.1
 Collate: 
@@ -51,6 +52,7 @@ Collate:
     'phyloHess.R'
     'pi.R'
     'plotParams.R'
+    'plotTree.R'
     'rateBounds.R'
     'rates.R'
     'rcppModules.R'
