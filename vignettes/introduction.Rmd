@@ -15,7 +15,11 @@ output:
 
 <br><br>
 
-> A standard probablistic phylogenetic model for discrete traits describes a species phylogeny with observed trait values at the tips of the tree and unobserved trait values at the ancestral nodes. In this framework the turnover rate ($\gamma$) describes the rate at which ``mutation'' events happen on the tree, and the allelic stationary distribution ($\pi$) describes the prior on allelic states $s$ at the root of the tree. phyloGLM modifies the standard phylogenetic model by parameterizing $\gamma$ and $\pi$ as functions of a set of genomic covariates. Furthermore, phyloGLM can accommodate probabilistic allele values at the tips of the tree by taking conditional probabilities of the raw data given the allelic state ($P(x|s)$). This can be highly useful in the presence of poor cross species alignments or potential error in calling the trait value.
+> A standard probablistic phylogenetic model for discrete traits describes a species phylogeny with observed trait values at the tips of the tree and unobserved trait values at the ancestral nodes. In this framework the turnover rate ($\gamma$) describes the rate at which "mutation" events happen on the tree, and the allelic stationary distribution ($\pi$) describes the prior on allelic states $s$ at the root of the tree. phyloGLM modifies the standard phylogenetic model by parameterizing $\gamma$ and $\pi$ as functions of a set of genomic covariates. Furthermore, phyloGLM can accommodate probabilistic allele values at the tips of the tree by taking conditional probabilities of the raw data given the allelic state ($P(x|s)$). This can be highly useful in the presence of poor cross species alignments or potential error in calling the trait value.
+
+# Installation
+
+Currently, phyloGLM is not available on CRAN so the only way to install it is from the GitHub repo. To install it directly you need to have `devtools` installed then run `devtools::install_github("ndukler/phyloGLM")`. You can also clone the phyloGLM repo and install from source if desired. This package is still being actively developed so reccomendations on ways to improve documentation and bug reports are very welcome. 
 
 # Constructing your first rate model
 
@@ -35,23 +39,26 @@ plot(tree)
 ```
 
 Next we need set of covariates. Note that we also included a site id as the first column, this will be useful in a moment.
+
 ```{r read_covariates, warning=FALSE,message=FALSE}
 ## Read in covarites associated with each site 
 siteLabels=fread(system.file("extdata", "siteCovariates.txt", package="phyloGLM"))
 head(siteLabels)
 ```
 
-Last we need to read in the allele data. It's easiest to do this when the allele data is stored in text file where the first two columns are "site" and "species" respectively, and all other columns corresond the the conditional allele probabilities as shown below:
+Last we need to read in the allele data. It's easiest to do this when the allele data is stored in text file where the first two columns are `site` and `species` respectively, and all other columns corresond the the conditional allele probabilities as shown below:
 
 ```{r show_paf_format}
 writeLines(readLines(system.file("extdata", "samplePAF.txt", package="phyloGLM"),3))
 ```
 
 If in this format, it can be read into the format required to construct and alleleData object using the readPAF() function as follows. The subset argument guarentees that only the sites of interest are read in and matches their order in the subset vector. We can use value of the siteLabels$site to ensure the row order of the allele data matches the covariates. 
+
 ```{r read_paf, warning=FALSE,message=FALSE}
 ## Read in allele data
 aData=readPAF(system.file("extdata", "samplePAF.txt", package="phyloGLM"),subset = siteLabels$site)
 ```
+
 Now create the allele data object:
 
 ```{r build_allele_data,results="hide"}
@@ -71,7 +78,7 @@ rateMod <- rateModel(data = ad, rateFormula = rateFormula, rateBounds = rBounds)
 
 # phyloGLM is multithreaded
 
-Note that the likelihood calculations in this package scale well when parallelized up to one or two less than the number of available threads on your system. The "threads" argument can also be used with several other functions, including the fit function to speed up model fitting.
+Note that the likelihood calculations in this package scale well when parallelized up to one or two less than the number of available threads on your system. The `threads` argument can also be used with several other functions, including the fit function to speed up model fitting.
 
 ```{r benchmark,fig.width=4, fig.height=4}
 m <- microbenchmark::microbenchmark(
@@ -106,6 +113,7 @@ plot_grid(param_plots[[1]] + theme(axis.text.x = element_text(angle = 45, hjust 
 ```
 
 Because of the way the rate is parameterized, the exact values of the rate coefficients depend heavily on the upper and lower bounds for the rate (although the relative impacts are still interpertable). Thus it can be valuable to view the marginal distribution of rate estimates with respect each covariate. If we want to see the distribution of rates for specific covariate values we can compute the rates at desired sites for all edgeGroups and plot them. From this we can see the behavior of the rates with respect to the covariates on the data.
+
 ```{r marginal_rate_plots ,fig.width=7, fig.height=3.5}
 ## Compute the rate distribution
 rDist <- rates(rateMod)
@@ -125,6 +133,7 @@ plot_grid(g1, g2, align = "h")
 ```
 
 We can also compute the number of turnover events, both per site and plot those and a function of the covariates.
+
 ```{r turnover_plots,fig.width=7, fig.height=3.5}
 ## Compute expected number of transitions
 et <- marginalTransitions(rateMod, aggregate = "node")
@@ -161,6 +170,7 @@ rateModNull <- updateFormula(model = rateMod, rateFormula = nullFormula, piFormu
 fitted_status_alternate <- fit(rateModNull, threads = 3)
 lrt_expression <- lrt(h0 = rateModNull, hA = rateMod)
 ```
+
 Models may also be compared usng the baysian information criterion (BIC) which does not require that the models be nested. The lower the BIC the better the model, in other words if BIC(alternate) < BIC(null), we can conclude that the alternate model provides a better fit to the data. In this case we perform BIC(alternate)-BIC(NULL), see a large negative value, and conclude that the alternate model is better.  
 
 ```{r bic}
@@ -168,7 +178,8 @@ bic(rateMod) - bic(rateModNull)
 ```
 
 # Saving a rateModel for later exploration
-Lastly you can save any model using a combination of the pack() and saveRDS() functions. The model can then be recreated with the unpack command and you're good to go!
+Lastly you can save any model using a combination of the `pack()` and `saveRDS()` functions. The model can then be recreated with the unpack command and you're good to go!
+
 ```{r saving_model}
 pMod <- pack(rateMod)
 ## Saving and reloading the packed model (can use compression as well)

@@ -4,7 +4,7 @@
 \alias{readPAF}
 \title{Read in *.paf file}
 \usage{
-readPAF(f, subset)
+readPAF(f, subset = NULL)
 }
 \arguments{
 \item{f}{path to *.paf file}
