@@ -10,7 +10,7 @@
 #' @examples
 #' 
 #' @export
-methods::setGeneric("bic", function(model, i) {
+methods::setGeneric("bic", function(model) {
   standardGeneric("bic")
 })
 
