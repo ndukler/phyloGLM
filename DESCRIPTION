@@ -53,6 +53,7 @@ Collate:
     'pi.R'
     'plotParams.R'
     'plotTree.R'
+    'predict.R'
     'rateBounds.R'
     'rates.R'
     'rcppModules.R'
