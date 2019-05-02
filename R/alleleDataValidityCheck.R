@@ -22,8 +22,8 @@ alleleDataValidityCheck <- function(object) {
   # }
   
   ## Check that all of the columns in site info are either numeric, factors, or integers
-  if(!all(sapply(object@siteInfo,class) %in% c("numeric","factor","integer"))){
-    stop("All siteInfo columns must be either numeric or factors.")
+  if(!all(sapply(object@siteInfo,class) %in% c("numeric","factor","integer","logical"))){
+    stop("All siteInfo columns must be either numeric, logical, or factors.")
   }
   
   ## Check that there are the same number of rows in the siteInfo data.frame as there are rows in the data
