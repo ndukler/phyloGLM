@@ -103,7 +103,7 @@ methods::setMethod("predict", signature(object = "rateModel"), function(object,d
   repChildren <- object@edgeGroups[!duplicated(object@edgeGroups$edgeGroup), .(child, edgeGroup)]
   ## compute rates
   out_rate <- data.table::as.data.table(expand.grid(edgeGroup = as.integer(repChildren$edgeGroup), site = as.integer(sites)))
-  out_rate <- merge(repChildren, out, by = "edgeGroup")
+  out_rate <- merge(repChildren, out_rate, by = "edgeGroup")
   out_rate[, rate := object@phylogeny$rateV(child - 1, sites - 1, rateDM_ptr@x), by = c("child")]
   out_rate[, child := NULL]
   ## Compute stationary distribution
