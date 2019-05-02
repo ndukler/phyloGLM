@@ -15,5 +15,5 @@ a list of per node/edge matricies containing the expected number of allelic tran
 rows are the ancestral allele and the columns are the descendant allele
 }
 \description{
-Compute the expected number of transitions aggregated accorss either nodes or edges
+Compute the expected number of transitions aggregated across either nodes or edges
 }

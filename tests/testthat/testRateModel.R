@@ -164,10 +164,27 @@ if (exists("rateMod")) {
 
   ## -------------------------------------------------------------------------- ##
   testthat::context("Gradient calculations")
-  g_num <- as.numeric(numDeriv::jacobian(func = phyloGLM:::scaledLL, method = "simple", x = getParams(rateMod), model = rateMod, scale = -1, threads = 1))
+  g_num <- as.numeric(numDeriv::jacobian(func = phyloGLM:::scaledLL, method = "simple", 
+                                         x = getParams(rateMod), model = rateMod, scale = -1, threads = 1))
   g_ana <- phyloGLM:::phyloGrad(model = rateMod, scale = -1)
   testthat::test_that(
     "Check rate gradient calculations",
     testthat::expect_gt(cor(g_num, g_ana), 0.99)
+  )
+  
+  ## -------------------------------------------------------------------------- ##
+  testthat::context("Expected transitions calculations")
+  ## Compute pairwise marginal between ancestor (D) and all tips
+  logPairwisePotential_DA <- matrix(c(logAlphaAll[1]+logBetaAll[7]+qBaseNormE1[1,1], ## P(D = 1, A = 1)
+                            logAlphaAll[1]+logBetaAll[8]+qBaseNormE1[2,1], ## P(D = 2, A = 1)
+                            logAlphaAll[2]+logBetaAll[7]+qBaseNormE1[1,2],
+                            logAlphaAll[2]+logBetaAll[8]+qBaseNormE1[2,2]), byrow = F, nrow = 2)
+  logPairwiseProb_DA <- exp(logPairwisePotential_DA-logSumExp(as.numeric(logPairwisePotential_DA)))
+  mt <- marginalTransitions(rateMod)
+  testthat::test_that("Testing pairwise marginal calculations",
+                      testthat::expect_equal(as.numeric(mt[[1]]),as.numeric(logPairwiseProb_DA))
+  )
+  testthat::test_that("Testing consistency of nodewise and edgewise marginals",
+                      testthat::expect_equal(Reduce("+",mt), marginalTransitions(rateMod,aggregate = "node")[[1]])
   )
 }

@@ -24,7 +24,7 @@ methods::setMethod("marginal", signature(model = "rateModel"), function(model, t
 
 #' Expected transitions per site
 #'
-#' Compute the expected number of transitions aggregated accorss either nodes or edges
+#' Compute the expected number of transitions aggregated across either nodes or edges
 #' @param model rateModel object
 #' @param aggregate How expected numbers of transitions should be aggregated (either by edge or by node)
 #' @param threads number of threads to use
