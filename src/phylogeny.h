@@ -62,6 +62,7 @@ public:
   double rate(const int child,const std::vector<double>& siteX);
   std::vector<double> rateV(const int child,std::vector<double> sites,const SEXP ratePtr);
   arma::vec pi(const std::vector<double>& piV);
+  Rcpp::NumericMatrix piV_Rcpp(std::vector<double> sites,const SEXP piPtr);
   arma::mat rateMatrix(const arma::vec & pi,const double rate, const double branchLength);
   std::vector<double> siteLL(const SEXP dataPtr, const SEXP ratePtr,const SEXP piPtr,
                              const unsigned int threads);
