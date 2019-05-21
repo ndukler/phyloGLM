@@ -138,6 +138,19 @@ arma::vec phylogeny::pi(const std::vector<double>& piV){
   return(pPrime);
 }
 
+// Vectorized function for computing pi, can take many sites
+// NOT THREAD SAFE!!!
+Rcpp::NumericMatrix phylogeny::piV_Rcpp(std::vector<double> sites,const SEXP piPtr){
+  XPtr<std::vector<std::vector<double>>> p(piPtr);
+  std::vector<std::vector<double>> piX = *p;
+  Rcpp::NumericMatrix out(sites.size(),nAlleles); 
+  for(unsigned int i=0;i<sites.size();i++){
+    arma::vec a = pi(piX[sites[i]]);
+    out(i,_) = NumericVector(a.begin(),a.end());
+  }
+  return(out);
+}
+
 // Note that the rows are the parent allele and the columns are the child allele
 arma::mat phylogeny::rateMatrix(const arma::vec& pi,const double rate, const double branchLength) {
   // initalize temp matrix with all ones
@@ -687,6 +700,7 @@ RCPP_MODULE(phylogeny) {
   .constructor<Rcpp::NumericVector, Rcpp::DataFrame, Rcpp::DataFrame, Rcpp::IntegerVector,Rcpp::List,Rcpp::List>()
   .method("rate", &phylogeny::rate )
   .method("rateV", &phylogeny::rateV)
+  .method("piV_Rcpp", &phylogeny::piV_Rcpp)
   .method("pi", &phylogeny::pi)
   .method("rateMatrix",&phylogeny::rateMatrix)
   .method("getRateIndex", &phylogeny::getRateIndex)

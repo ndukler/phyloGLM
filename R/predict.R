@@ -107,10 +107,10 @@ methods::setMethod("predict", signature(object = "rateModel"), function(object,d
   out_rate[, rate := object@phylogeny$rateV(child - 1, sites - 1, rateDM_ptr@x), by = c("child")]
   out_rate[, child := NULL]
   ## Compute stationary distribution
-  out_pi <- data.table::rbindlist(lapply(as.list(sites), function(x) data.table::data.table(
-    site = x, allele = 1:getAlleleData(object)@nAlleles,
-    object@phylogeny$pi(piDM_ptr[x, ])
-  )))
+  out_pi <- melt(data.table::data.table(object@phylogeny$piV_Rcpp(sites - 1, piDM_ptr@x))[,site:=sites],id.vars="site")
+  data.table::setnames(out_pi,c("variable","value"),c("allele","probability"))
+  out_pi[,allele:=as.integer(gsub("V","",allele))]
+  setkeyv(out_pi,cols = c("site","allele"))
   ## Return predicted values in list
   return(list(rate=out_rate,pi=out_pi))
 })
