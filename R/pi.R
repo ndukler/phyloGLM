@@ -24,10 +24,10 @@ methods::setMethod("pi", signature(model = "rateModel"), function(model, sites =
     stop("Out of range site specified")
   }
   ## compute pi
-  out <- data.table::rbindlist(lapply(as.list(sites), function(x) data.table::data.table(
-      site = x, allele = 1:getAlleleData(model)@nAlleles,
-      model@phylogeny$pi(model@rateDM[x, ])
-    )))
-  data.table::setnames(out, "V1", "probability")
+  ## Compute stationary distribution
+  out_pi <- melt(data.table::data.table(model@phylogeny$piV_Rcpp(sites - 1, model@piDM@x))[,site:=sites],id.vars="site")
+  data.table::setnames(out_pi,c("variable","value"),c("allele","probability"))
+  out_pi[,allele:=as.integer(gsub("V","",allele))]
+  setkeyv(out_pi,cols = c("site","allele"))
   return(out)
 })
