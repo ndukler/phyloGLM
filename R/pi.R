@@ -29,5 +29,5 @@ methods::setMethod("pi", signature(model = "rateModel"), function(model, sites =
   data.table::setnames(out_pi,c("variable","value"),c("allele","probability"))
   out_pi[,allele:=as.integer(gsub("V","",allele))]
   setkeyv(out_pi,cols = c("site","allele"))
-  return(out)
+  return(out_pi)
 })
