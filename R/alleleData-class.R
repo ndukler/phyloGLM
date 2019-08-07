@@ -50,8 +50,7 @@ alleleData <- function(data, tree, siteInfo = NULL, logProb = FALSE) {
   if (!is.null(siteInfo) && !is.data.frame(siteInfo)) {
     stop("siteInfo must be a data.frame or a data.table")
   }
-  ## Ensure that all character columns have been converted to factors
-  siteInfo <- data.table::data.table(siteInfo, stringsAsFactors = T)
+
   
   ## Post-order tree
   tree <- ape::reorder.phylo(tree, "postorder")
@@ -69,6 +68,10 @@ alleleData <- function(data, tree, siteInfo = NULL, logProb = FALSE) {
   if (is.null(siteInfo)) {
     siteInfo <- data.table::data.table(default = rep(1, nrow(dataMatrix)))
   }
+  
+  ## Ensure that all character columns have been converted to factors
+  siteInfo <- data.table::data.table(siteInfo, stringsAsFactors = T)
+  
   ## Log data if necessary
   if (!logProb) {
     dataMatrix <- log(dataMatrix)
