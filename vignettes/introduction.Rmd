@@ -27,6 +27,7 @@ We need several elements to construct a rate model. The first is a tree, which, 
 
 ```{r read_tree, warning=FALSE,message=FALSE}
 library(phyloGLM)
+library(ggplot2)
 library(cowplot)
 library(scales)
 library(reshape2)
@@ -91,7 +92,8 @@ ggplot(m, aes(x = factor(as.numeric(m$expr)), y = time / 10^6)) +
   geom_boxplot() +
   ylab("Time for log-likelihood evaluation (ms)") +
   xlab("Threads") +
-  ylim(0, max(m$time / 10^6))
+  ylim(0, max(m$time / 10^6))+
+  theme_cowplot()
 ```
 
 # Fitting and analysing a rateModel
