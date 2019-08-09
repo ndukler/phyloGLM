@@ -55,11 +55,11 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model, scale 
                 if (method == "bfgs") {
                   sink(file = log)
                   optMod <- optim(
-                    par = getParams(model)[!model@fixed], fn = scaledLL, gr = phyloGLM:::phyloGrad, 
+                    par = getParams(model)[!model@fixed], fn = phyloGLM:::scaledLL, gr = phyloGLM:::phyloGrad, 
                     model = model, scale = scale, threads = threads, method = "L-BFGS-B", hessian = FALSE
                   )
                   sink()
-                  setParams(model, optMod$par, 0:(length(optMod$par)-1))
+                  setParams(model, optMod$par, which(model@fixed)-1)
                   # optMod$counts=optMod$iter
                   optMod$hessian <- numDeriv::hessian(func = ll, x = optMod$par, model = model)
                 } else if (method == "mlsl") {

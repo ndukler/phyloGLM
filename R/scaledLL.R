@@ -1,7 +1,7 @@
 #' Compute scaled negative log-likelihood
 #'
 #' Compute scaled log-likelihood for given rate model object
-#' @param x a set of parameters to compute the log-likelihood for (optional)
+#' @param x a set of parameters to compute the log-likelihood for (optional). Only unfixed parameters.
 #' @param model rateModel object
 #' @param scale value to scale log-likelihood by (default=1)
 #' @param threads number of threads to use

@@ -4,7 +4,7 @@
 \alias{scaledLL}
 \title{Compute scaled negative log-likelihood}
 \arguments{
-\item{x}{a set of parameters to compute the log-likelihood for (optional)}
+\item{x}{a set of parameters to compute the log-likelihood for (optional). Only unfixed parameters.}
 
 \item{model}{rateModel object}
 
