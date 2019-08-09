@@ -1,5 +1,5 @@
-methods::setGeneric("fit", function(model, scale = NULL, method = c("l-bfgs-b", "mlsl", "stogo"), threads = 1, control = list(),
-                                    log = "log.txt") {
+methods::setGeneric("fit", function(model, scale = NULL, method = c("l-bfgs-b", "mlsl", "stogo"), hessian = FALSE, 
+                                    threads = 1, control = list(), log = "log.txt") {
   standardGeneric("fit")
 })
 
@@ -9,6 +9,7 @@ methods::setGeneric("fit", function(model, scale = NULL, method = c("l-bfgs-b", 
 #' @param model rateModel
 #' @param scale a scale factor to apply to log-likelihood, defaults to -1/nsites
 #' @param method Optimization method to use ("bfgs","mlsl","stogo")
+#' @param hessian if TRUE calculate hessian
 #' @param threads number of threads to use
 #' @param control See control from \link[stats]{optim} if using l-bfgs-b, otherwise look at \link[nloptr]{nl.opts}
 #' @name fit
@@ -18,7 +19,7 @@ methods::setGeneric("fit", function(model, scale = NULL, method = c("l-bfgs-b", 
 #' 
 #' @export
 methods::setMethod("fit", signature(model = "rateModel"), function(model, scale = -1, method = c("bfgs", "mlsl", "stogo"),
-                                                                   threads = 1, control = list(), log = "optim_log.txt") {
+                                                                   hessian = FALSE, threads = 1, control = list(), log = "optim_log.txt") {
   ## scale defaults to -1/nsites
   if (!is.numeric(scale)) {
     stop("scale must be a numeric value")
@@ -55,13 +56,15 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model, scale 
                 if (method == "bfgs") {
                   sink(file = log)
                   optMod <- optim(
-                    par = getParams(model)[!model@fixed], fn = phyloGLM:::scaledLL, gr = phyloGLM:::phyloGrad, 
+                    par = getParams(model)[!model@fixed], fn = scaledLL, gr = phyloGLM:::phyloGrad, 
                     model = model, scale = scale, threads = threads, method = "L-BFGS-B", hessian = FALSE
                   )
                   sink()
-                  setParams(model, optMod$par, which(model@fixed)-1)
+                  setParams(model, optMod$par, which(model@fixed) - 1)
                   # optMod$counts=optMod$iter
-                  optMod$hessian <- numDeriv::hessian(func = ll, x = optMod$par, model = model)
+                  if(hessian){
+                    optMod$hessian <- numDeriv::hessian(func = ll, x = optMod$par, model = model)
+                  }
                 } else if (method == "mlsl") {
                   stop("Unimplemented optimization method specified")
                   optMod <- nloptr::mlsl(
