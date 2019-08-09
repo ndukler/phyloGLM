@@ -257,7 +257,26 @@ if (exists("rateMod")) {
                       testthat::expect_equal(ll(model=rateMod),ll(model = unpacked_model))
   )
   
+  ## -------------------------------------------------------------------------- ##
+  testthat::context("Test copying")
+  
+  suppressWarnings(rateMod_original <- rateModel(data = ad, rateFormula = rateFormula, lineageTable = et))
+  setParams(rateMod_original, rep(1, 12), 0:11)
+  suppressWarnings(rateMod_copy <- copy(rateMod_original))
 
-
-    
+  testthat::test_that("There are no side effects from modifying the parameter vector of the copy",{
+    setParams(rateMod_copy, 3, 2)                  
+    testthat::expect_true(getParams(rateMod_copy)[3] != getParams(rateMod_original)[3])
+  })
+  
+  testthat::test_that("There are no side effects from modifying the fixed vector of the copy",{
+    updateFixed(rateMod_copy@fixed, TRUE, 2)                  
+    testthat::expect_true(rateMod_copy@fixed[3] != rateMod_original@fixed[3])
+  })
+  
+  testthat::test_that("There are no side effects from forcing a parameter value to zero",{
+    forceParameterZero(rateMod_copy,5,verbose = F)
+    testthat::expect_true(rateMod_copy@fixed[6] != rateMod_original@fixed[6] &&
+                            getParams(rateMod_copy)[6] != getParams(rateMod_original)[6])
+  })
 }
