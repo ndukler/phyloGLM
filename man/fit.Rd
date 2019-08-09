@@ -10,6 +10,8 @@
 
 \item{method}{Optimization method to use ("bfgs","mlsl","stogo")}
 
+\item{hessian}{if TRUE calculate hessian}
+
 \item{threads}{number of threads to use}
 
 \item{control}{See control from \link[stats]{optim} if using l-bfgs-b, otherwise look at \link[nloptr]{nl.opts}}
