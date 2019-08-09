@@ -41,20 +41,20 @@ methods::setGeneric("pack", function(model) {
 #' @rdname pack
 methods::setMethod("pack", signature(model = "rateModel"), function(model) {
   ## Extract all the objects needed to rebuild the alleleData object
-  ad <- getAlleleData(model)
-  tree <- getTree(ad)
+  ad <- rlang::duplicate(getAlleleData(model))
+  tree <- rlang::duplicate(getTree(ad))
   dat <- ad@data[1:ad@data@nrow,,drop=FALSE]
   a <- rep(tree$tip.label, each = ad@nAlleles)
   data <- lapply(split(seq_along(a), a)[tree$tip.label], function(ind, m) m[, ind, drop=FALSE], m = dat)
   rm(dat)
   siteInfo <- ad@siteInfo
   ## Extract all the objects needed to rebuild the rateModel object
-  rateFormula <- model@rateFormula
-  piFormula <- model@piFormula
-  lineageTable <- model@edgeGroups
-  params <- getParams(model)
-  fixed <- model@fixed
-  rateBounds <- getRateBounds(model)
+  rateFormula <- rlang::duplicate(model@rateFormula)
+  piFormula <- rlang::duplicate(model@piFormula)
+  lineageTable <- rlang::duplicate(model@edgeGroups)
+  params <- rlang::duplicate(getParams(model))
+  fixed <- rlang::duplicate(model@fixed)
+  rateBounds <- rlang::duplicate(getRateBounds(model))
   return(new("packedModel",
     tree = tree, data = data, siteInfo = siteInfo, rateFormula = rateFormula, piFormula = piFormula,
     lineageTable = lineageTable, params = params, fixed = fixed, rateBounds = rateBounds

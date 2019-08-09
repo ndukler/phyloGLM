@@ -10,11 +10,13 @@ License: GPL (>= 2)
 biocViews:
 Imports: Rcpp (>= 1.0.0),
          RcppArmadillo,
+         rlang,
          data.table,
          ape,
          methods,
          numDeriv,
-         cowplot
+         cowplot,
+         ggplot2
 LinkingTo: Rcpp,
            RcppArmadillo
 RcppModules: paramIndex,
