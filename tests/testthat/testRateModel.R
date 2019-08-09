@@ -30,7 +30,7 @@ sigmoid <- function(z) {
 ## construct rateModel
 testthat::context("rateModel object can be constructed")
 testthat::expect_s4_class({
-  suppressWarnings(rateMod <- rateModel(data = ad, rateFormula = rateFormula, lineageTable = et))
+  suppressWarnings(rateMod <<- rateModel(data = ad, rateFormula = rateFormula, lineageTable = et))
 }, class = "rateModel")
 
 setParams(rateMod, rep(0, 12), 0:11)
@@ -187,4 +187,77 @@ if (exists("rateMod")) {
   testthat::test_that("Testing consistency of nodewise and edgewise marginals",
                       testthat::expect_equal(Reduce("+",mt), marginalTransitions(rateMod,aggregate = "node")[[1]])
   )
+  
+  ## -------------------------------------------------------------------------- ##
+  testthat::context("Fixing parameter values")
+  testthat::test_that("Testing fixing parameters",{
+                      setFixed(rateMod,c(TRUE,TRUE),2:3)
+                      testthat::expect_equal(rateMod@fixed[3:4],c(TRUE,TRUE))
+  })
+  
+  testthat::test_that("Testing fixing parameters, should get error",{
+    testthat::expect_error(setFixed(rateMod,c(TRUE,TRUE),2:4),
+                           "Index and replacement vectors must be of the same length")
+  })
+  
+  testthat::test_that("Testing fixing parameters, should get error",{
+    testthat::expect_error(setFixed(rateMod,c(TRUE),20),
+                           "Cannot use indicies < 0 or >= old.size()")
+  })
+  
+  testthat::test_that("Testing fixing parameters, should get error",{
+    testthat::expect_error(setFixed(rateMod,c(TRUE),-1),
+                           "Cannot use indicies < 0 or >= old.size()")
+  })
+  
+  testthat::test_that("Test that ll calculations are correct when only passing unfixed params",{
+    ll_unfixed = phyloGLM:::scaledLL(model = rateMod)
+    phyloGLM:::setFixed(rateMod,rep(FALSE,length(rateMod@fixed)),0:(length(rateMod@fixed)-1))
+    phyloGLM:::setFixed(rateMod,rep(TRUE,3),c(2,5,7))
+    ll_fixed = phyloGLM:::scaledLL(x = getParams(rateMod)[!rateMod@fixed],model = rateMod)
+    testthat::expect_equal(ll_unfixed,ll_fixed)
+    phyloGLM:::setFixed(rateMod,rep(FALSE,length(rateMod@fixed)),0:(length(rateMod@fixed)-1))
+  })
+  
+  ## -------------------------------------------------------------------------- ##
+  testthat::context("Test packing and unpacking")
+  ## Compute pairwise marginal between ancestor (D) and all tips
+  phyloGLM:::setFixed(rateMod,rep(FALSE,length(rateMod@fixed)),0:(length(rateMod@fixed)-1))
+  phyloGLM:::setFixed(rateMod,rep(TRUE,3),c(2,5,7))
+  
+  testthat::test_that("Model can be packed",{
+    testthat::expect_s4_class(packed_model <<- pack(rateMod),"packedModel")
+  })
+  
+  testthat::test_that("Model can be unpacked",testthat::expect_s4_class({
+    suppressWarnings(unpacked_model <<- unpack(packed_model))
+  } ,class = "rateModel"))
+  
+  testthat::test_that("Packed and unpacked models have the same parameter vectors",
+                      testthat::expect_equal(getParams(rateMod),getParams(unpacked_model))
+  )
+  
+  testthat::test_that("Packed and unpacked models have the same fixed vectors",
+                      testthat::expect_equal(rateMod@fixed,unpacked_model@fixed)
+  )
+  
+  testthat::test_that("Packed and unpacked models have the same trees",
+                      testthat::expect_true(ape::all.equal.phylo(getTree(rateMod),getTree(unpacked_model)))
+  )
+  
+  testthat::test_that("Packed and unpacked models have the same pi data",
+                      testthat::expect_true(all.equal(rateMod@piDM[1:rateMod@piDM@nrow, ],
+                                                      unpacked_model@piDM[1:unpacked_model@piDM@nrow, ])))
+  
+  testthat::test_that("Packed and unpacked models have the same rate data",
+                      testthat::expect_true(all.equal(rateMod@rateDM[1:rateMod@rateDM@nrow, ],
+                                                      unpacked_model@rateDM[1:unpacked_model@rateDM@nrow, ])))
+  
+  testthat::test_that("Packed and unpacked models produce the same LL",
+                      testthat::expect_equal(ll(model=rateMod),ll(model = unpacked_model))
+  )
+  
+
+
+    
 }

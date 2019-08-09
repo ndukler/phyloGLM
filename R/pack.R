@@ -43,9 +43,9 @@ methods::setMethod("pack", signature(model = "rateModel"), function(model) {
   ## Extract all the objects needed to rebuild the alleleData object
   ad <- getAlleleData(model)
   tree <- getTree(ad)
-  dat <- ad@data[1:ad@data@nrow, ]
+  dat <- ad@data[1:ad@data@nrow,,drop=FALSE]
   a <- rep(tree$tip.label, each = ad@nAlleles)
-  data <- lapply(split(seq_along(a), a)[tree$tip.label], function(ind, m) m[, ind], m = dat)
+  data <- lapply(split(seq_along(a), a)[tree$tip.label], function(ind, m) m[, ind, drop=FALSE], m = dat)
   rm(dat)
   siteInfo <- ad@siteInfo
   ## Extract all the objects needed to rebuild the rateModel object
@@ -85,5 +85,6 @@ methods::setMethod("unpack", signature(pm = "packedModel"), function(pm) {
     piFormula = pm@piFormula, lineageTable = pm@lineageTable, rateBounds = pm@rateBounds
   )
   setParams(r, pm@params, (1:length(pm@params)) - 1)
+  setFixed(r,pm@fixed, 0:(length(pm@fixed)-1))
   return(r)
 })
