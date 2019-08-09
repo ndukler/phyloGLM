@@ -25,7 +25,7 @@ stlMatrix <- function(x) {
 #' @export
 setMethod(
   "[", c("stlMatrix", "numeric", "missing", "ANY"),
-  function(x, i, j, ..., drop = TRUE) {
+  function(x, i, j, ..., drop = FALSE) {
     j <- 0:(x@ncol - 1)
     return(stlMatrixSubset(x@x, i - 1, j))
   }

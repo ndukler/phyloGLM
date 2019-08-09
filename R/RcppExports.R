@@ -38,3 +38,17 @@ stlMatrixSubset <- function(xpsexp, row, col) {
     .Call(`_phyloGLM_stlMatrixSubset`, xpsexp, row, col)
 }
 
+#' updateFixed
+#' 
+#' This function takes an logical vector, a 0-based vector of indices, and an vector
+#' of updated logical values to update the first logical vector without triggering
+#' a rebuild of any associated S4 object.
+#'
+#' @param old A logical vector to be updated
+#' @param replacement A logical vecotor of replacement values
+#' @param index the 0-based indicies to update in the old vector
+#' @export
+updateFixed <- function(old, replacement, index) {
+    invisible(.Call(`_phyloGLM_updateFixed`, old, replacement, index))
+}
+

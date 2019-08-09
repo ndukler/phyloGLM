@@ -52,6 +52,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// updateFixed
+void updateFixed(Rcpp::LogicalVector old, Rcpp::LogicalVector replacement, Rcpp::IntegerVector index);
+RcppExport SEXP _phyloGLM_updateFixed(SEXP oldSEXP, SEXP replacementSEXP, SEXP indexSEXP) {
+BEGIN_RCPP
+    Rcpp::traits::input_parameter< Rcpp::LogicalVector >::type old(oldSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalVector >::type replacement(replacementSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type index(indexSEXP);
+    updateFixed(old, replacement, index);
+    return R_NilValue;
+END_RCPP
+}
 
 RcppExport SEXP _rcpp_module_boot_paramIndex();
 RcppExport SEXP _rcpp_module_boot_phylogeny();
@@ -61,6 +72,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_phyloGLM_logSumExp", (DL_FUNC) &_phyloGLM_logSumExp, 1},
     {"_phyloGLM_matrixToStlXptr", (DL_FUNC) &_phyloGLM_matrixToStlXptr, 1},
     {"_phyloGLM_stlMatrixSubset", (DL_FUNC) &_phyloGLM_stlMatrixSubset, 3},
+    {"_phyloGLM_updateFixed", (DL_FUNC) &_phyloGLM_updateFixed, 3},
     {"_rcpp_module_boot_paramIndex", (DL_FUNC) &_rcpp_module_boot_paramIndex, 0},
     {"_rcpp_module_boot_phylogeny", (DL_FUNC) &_rcpp_module_boot_phylogeny, 0},
     {NULL, NULL, 0}

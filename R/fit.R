@@ -34,8 +34,10 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model, scale 
   ## Where the parameter values are fixed, set lb=ub=value
   ## ub[model@fixed]=x[model@fixed]
   ## lb[model@fixed]=x[model@fixed]
-  lb <- rep(-5, length(getParams(model)))
-  ub <- rep(5, length(getParams(model)))
+  ## lb <- rep(-Inf, length(getParams(model)))
+  ## ub <- rep(Inf, length(getParams(model)))
+  ## lb[model@fixed] = getParams(model)[model@fixed]
+  ## ub[model@fixed] = getParams(model)[model@fixed]
 
   ## Set default control options
   if (method %in% c("bfgs")) {
@@ -53,11 +55,11 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model, scale 
                 if (method == "bfgs") {
                   sink(file = log)
                   optMod <- optim(
-                    par = getParams(model)[which(!model@fixed)], fn = scaledLL, gr = phyloGrad, model = model, scale = scale,
-                    threads = threads, method = "BFGS", hessian = FALSE
+                    par = getParams(model)[!model@fixed], fn = scaledLL, gr = phyloGLM:::phyloGrad, 
+                    model = model, scale = scale, threads = threads, method = "L-BFGS-B", hessian = FALSE
                   )
                   sink()
-                  setParams(model, optMod$par, which(!model@fixed) - 1)
+                  setParams(model, optMod$par, 0:(length(optMod$par)-1))
                   # optMod$counts=optMod$iter
                   optMod$hessian <- numDeriv::hessian(func = ll, x = optMod$par, model = model)
                 } else if (method == "mlsl") {
@@ -70,6 +72,7 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model, scale 
                   optMod$hessian <- numDeriv::hessian(func = scaledLL, x = optMod$par, model = model, scale = 1)
                   optMod$counts <- optMod$iter
                 } else if (method == "stogo") {
+                  stop("Unimplemented optimization method specified")
                   optMod <- nloptr::stogo(
                     x0 = getParams(model)[which(!model@fixed)], fn = phyloGLM:::scaledLL, model = model, scale = scale,
                     threads = threads, lower = lb, upper = ub
@@ -85,7 +88,7 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model, scale 
                   par = optMod$par, hessian = optMod$hessian
                 )))
               },
-            error = function(c){
+            error = function(e){
               suppressWarnings(sink()) ## close any open sinks
               message(paste("ERROR: ", e))
               optMod = list()
