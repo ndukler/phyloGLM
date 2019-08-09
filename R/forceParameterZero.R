@@ -27,6 +27,7 @@ methods::setMethod("forceParameterZero", signature(obj = "rateModel"), function(
       info = c(type = "pi",rateIndex[piIndex$idx==index,])  
     }
   }
-  with(info,print(paste0("Variable <",name,"> of type <",type,"> in group <",group,"> has been fixed to 0.")))
+  if(verbose)
+    with(info,print(paste0("Variable <",name,"> of type <",type,"> in group <",group,"> has been fixed to 0.")))
   
 })
