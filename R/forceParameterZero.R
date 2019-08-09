@@ -19,8 +19,8 @@ methods::setMethod("forceParameterZero", signature(obj = "rateModel"), function(
   updateFixed(old = obj@fixed, replacement = TRUE, index = index)
   setParams(obj = obj, x = 0, index = index)
   if(verbose){
-    rateIndex = rateMod@phylogeny$getRateIndex()
-    piIndex = rateMod@phylogeny$getPiIndex()
+    rateIndex = obj@phylogeny$getRateIndex()
+    piIndex = obj@phylogeny$getPiIndex()
     if(index %in% rateIndex$idx){
       info = c(type = "rate",rateIndex[rateIndex$idx==index,])  
     } else {
