@@ -214,7 +214,7 @@ if (exists("rateMod")) {
     ll_unfixed = phyloGLM:::scaledLL(model = rateMod)
     phyloGLM:::setFixed(rateMod,rep(FALSE,length(rateMod@fixed)),0:(length(rateMod@fixed)-1))
     phyloGLM:::setFixed(rateMod,rep(TRUE,3),c(2,5,7))
-    ll_fixed = phyloGLM:::scaledLL(x = getParams(rateMod)[!rateMod@fixed],model = rateMod)
+    ll_fixed = phyloGLM:::scaledLL(x = getParams(rateMod)[!rateMod@fixed],model = rateMod, index = which(!rateMod@fixed)-1)
     testthat::expect_equal(ll_unfixed,ll_fixed)
     phyloGLM:::setFixed(rateMod,rep(FALSE,length(rateMod@fixed)),0:(length(rateMod@fixed)-1))
   })

@@ -11,6 +11,8 @@
 \item{scale}{value to scale log-likelihood by (default=1)}
 
 \item{threads}{number of threads to use}
+
+\item{index}{integer vector of parameter indicies in vector (0-based)}
 }
 \value{
 scaled log-likelihood

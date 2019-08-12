@@ -100,7 +100,7 @@ ggplot(m, aes(x = factor(as.numeric(m$expr)), y = time / 10^6)) +
 
 Now we can fit the model:
 ```{r fit_model}
-fitted_status <- fit(model = rateMod, threads = 3,method = "bfgs")
+fitted_status <- fit(model = rateMod, threads = 3,method = "bfgs", hessian = TRUE)
 ```
 
 Once fitted we can extract the parameters, we can use the estimated hessiantheir approximate standard errors and plot them. The rate parameters are fairly straightforward to interper, coefficients which are greater than zero are associated with an increased turnover rate, while coefficients less than zero are associated with a decreased turnover rate. The allelic parameters are more difficult to interpert, but essentially for a coefficient $\beta_{ij}>0$ where $i$ is the allele and $j$ is the feature, feature $j$ is positively correlated with an increased frequency of allele $i$ relative to the base allele.  
