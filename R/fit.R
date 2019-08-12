@@ -7,7 +7,7 @@ methods::setGeneric("fit", function(model, scale = NULL, method = c("l-bfgs-b", 
 #'
 #' Fits rate model object and returns fitted model
 #' @param model rateModel
-#' @param scale a scale factor to apply to log-likelihood, defaults to -1/nsites
+#' @param scale a scale factor to apply to log-likelihood, defaults to -1
 #' @param method Optimization method to use ("bfgs","mlsl","stogo")
 #' @param hessian if TRUE calculate hessian
 #' @param threads number of threads to use
@@ -20,7 +20,7 @@ methods::setGeneric("fit", function(model, scale = NULL, method = c("l-bfgs-b", 
 #' @export
 methods::setMethod("fit", signature(model = "rateModel"), function(model, scale = -1, method = c("bfgs", "mlsl", "stogo"),
                                                                    hessian = FALSE, threads = 1, control = list(), log = stdout()) {
-  ## scale defaults to -1/nsites
+  ## scale defaults -1
   if (!is.numeric(scale)) {
     stop("scale must be a numeric value")
   }
@@ -47,10 +47,10 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model, scale 
     cont <- nloptr::nl.opts()
   }
   ## Overwrite defaults when user has supplied values
+  cont[["trace"]] <- 1
   for (n in names(control)) {
     cont[[n]] <- control[[n]]
   }
-  cont[["trace"]] <- 1
   tryCatch( expr = 
               {
                 if (method == "bfgs") {
@@ -58,7 +58,7 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model, scale 
                   optMod <- optim(
                     par = getParams(model)[!model@fixed], fn = scaledLL, gr = phyloGrad, 
                     model = model, scale = scale, threads = threads, index = which(!model@fixed)-1,
-                    method = "L-BFGS-B", hessian = FALSE
+                    method = "L-BFGS-B", hessian = FALSE, control = cont
                   )
                   if(sink.number()>0){
                     sink()
