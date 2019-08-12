@@ -549,7 +549,7 @@ std::vector<double> phylogeny::grad(const SEXP dataPtr, const SEXP ratePtr,const
   /*
    * Compute gradients for rate parameters
    */
-  
+
   // Cast ratePtr to std::vector
   XPtr<std::vector<std::vector<double>>> r(ratePtr);
   std::vector<std::vector<double>> rateX = *r;
@@ -591,7 +591,7 @@ std::vector<double> phylogeny::grad(const SEXP dataPtr, const SEXP ratePtr,const
    */
   
   // Cast piPtr to std::vector
-  XPtr<std::vector<std::vector<double>>> pi(ratePtr);
+  XPtr<std::vector<std::vector<double>>> pi(piPtr);
   std::vector<std::vector<double>> piX = *pi;
   // Get piParams metadata
   paramGrp = piIndex.getGroup();
