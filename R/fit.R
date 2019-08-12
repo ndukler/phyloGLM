@@ -19,7 +19,7 @@ methods::setGeneric("fit", function(model, scale = NULL, method = c("l-bfgs-b", 
 #' 
 #' @export
 methods::setMethod("fit", signature(model = "rateModel"), function(model, scale = -1, method = c("bfgs", "mlsl", "stogo"),
-                                                                   hessian = FALSE, threads = 1, control = list(), log = "optim_log.txt") {
+                                                                   hessian = FALSE, threads = 1, control = list(), log = stdout()) {
   ## scale defaults to -1/nsites
   if (!is.numeric(scale)) {
     stop("scale must be a numeric value")
@@ -56,14 +56,19 @@ methods::setMethod("fit", signature(model = "rateModel"), function(model, scale 
                 if (method == "bfgs") {
                   sink(file = log)
                   optMod <- optim(
-                    par = getParams(model)[!model@fixed], fn = scaledLL, gr = phyloGLM:::phyloGrad, 
-                    model = model, scale = scale, threads = threads, method = "L-BFGS-B", hessian = FALSE
+                    par = getParams(model)[!model@fixed], fn = scaledLL, gr = phyloGrad, 
+                    model = model, scale = scale, threads = threads, index = which(!model@fixed)-1,
+                    method = "L-BFGS-B", hessian = FALSE
                   )
-                  sink()
-                  setParams(model, optMod$par, which(model@fixed) - 1)
+                  if(sink.number()>0){
+                    sink()
+                  }
+                  setParams(model, optMod$par, which(!model@fixed) - 1)
                   # optMod$counts=optMod$iter
                   if(hessian){
-                    optMod$hessian <- numDeriv::hessian(func = ll, x = optMod$par, model = model)
+                    message("Fitting complete, computing hessian ...")
+                    optMod$hessian <- numDeriv::hessian(func = ll, x = optMod$par, model = model, 
+                                                        index = which(!model@fixed) - 1)
                   }
                 } else if (method == "mlsl") {
                   stop("Unimplemented optimization method specified")

@@ -9,7 +9,7 @@
 #' @name phyloGrad
 #' @include rateModel-class.R
 #' @rdname phyloGrad
-methods::setGeneric("phyloGrad", function(x, model, scale = 1, eps = .Machine$double.eps, threads = 1) {
+methods::setGeneric("phyloGrad", function(x, model, scale = 1, eps = .Machine$double.eps, threads = 1, index = NULL) {
   standardGeneric("phyloGrad")
 })
 
@@ -17,7 +17,7 @@ methods::setGeneric("phyloGrad", function(x, model, scale = 1, eps = .Machine$do
 #' @name phyloGrad
 #' @rdname phyloGrad
 methods::setMethod("phyloGrad", signature(x = "missing", model = "rateModel"), function(x, model, scale = 1,
-                                                                                        eps = .Machine$double.eps, threads = 1) {
+                                                                                        eps = .Machine$double.eps, threads = 1, index = NULL) {
   # ## Get initial parameters
   # x=getParams(model)
   # ## Calculate stepsize for optimal finite gradient approximation
@@ -57,7 +57,26 @@ methods::setMethod("phyloGrad", signature(x = "missing", model = "rateModel"), f
 #' @name phyloGrad
 #' @rdname phyloGrad
 methods::setMethod("phyloGrad", signature(x = "numeric", model = "rateModel"), function(x, model, scale = 1,
-                                                                                        eps = .Machine$double.eps, threads = 1) {
-  setParams(model, x, which(!model@fixed) - 1)
-  return(phyloGrad(model = model, scale = scale, eps = eps, threads = threads))
+                                                                                        eps = .Machine$double.eps, threads = 1, index = NULL) {
+  ## Save initial parameter values
+  initP <- getParams(model)
+  ## Default to index being all parameters, otherwise must specify index
+  if(is.null(index)){
+    if(length(x) != length(initP)){
+      stop("If no index specified x must be same length as the full parameter vector")
+    } else{
+      index = 0:(length(initP)-1) 
+    }
+  } else {
+    if(length(x) != length(index)){
+      stop("length(x) does not equal length(index)")
+    }
+  }
+  ## Set parameters
+  setParams(model, x, index)
+  ## Evaluate gradient
+  g <- phyloGrad(model = model, scale = scale, eps = eps, threads = threads)
+  ## Restore original parameter values
+  setParams(model, initP, 0:(length(initP) - 1))
+  return(g)
 })
