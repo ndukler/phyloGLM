@@ -319,9 +319,15 @@ void phylogeny::chunkEdgewiseMarginalTransitions(std::vector<std::vector<std::ve
                               const std::vector<std::vector<double>>& data,
                               const std::vector<std::vector<double>>& rateX, 
                               const std::vector<std::vector<double>>& piX,
-                              unsigned int start, unsigned int end){
+                              unsigned int start, unsigned int end,
+                              const std::vector<bool> & include){
   for(unsigned int i=start;i<end;i++){
-    // Computre the stationary distribution for site i
+    // If not included skip rest of loop
+    if(!include[i]){
+      // std::cout << "skipping " << i << std::endl;
+      continue;
+    }
+    // Compute the stationary distribution for site i
     arma::vec sitePi = pi(piX[i]);
     // Rcpp::Rcout << "LogPi: " << logPi << std::endl;
     std::vector<std::vector<double>> alpha = postorderMessagePassing(data[i], rateX[i], piX[i]);
@@ -354,7 +360,9 @@ void phylogeny::chunkEdgewiseMarginalTransitions(std::vector<std::vector<std::ve
   }
 }
 
-std::vector<std::vector<std::vector<double>>> phylogeny::edgewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads) {
+std::vector<std::vector<std::vector<double>>> phylogeny::edgewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,
+                                                                                     Rcpp::IntegerVector & exclude,
+                                                                                     const unsigned int threads) {
   // Type and dereference external pointers
   XPtr<std::vector<std::vector<double>>> d(dataPtr);
   std::vector<std::vector<double>> data = *d;
@@ -370,6 +378,12 @@ std::vector<std::vector<std::vector<double>>> phylogeny::edgewiseMarginalTransit
   unsigned int start = 0; // each thread does [start..end)
   unsigned int end = rows;
   
+  // Convert exclude to boolean include vector
+  std::vector<bool> include(sites,true);
+  for(Rcpp::IntegerVector::iterator i = exclude.begin(); i != exclude.end(); ++i) {
+    include[*i] = false;
+  }
+  
   std::vector<std::vector<std::vector<double>>> expectedTransitions(edges.size(),std::vector<std::vector<double>>(nAlleles,std::vector<double>(nAlleles))); // Marginal per site distribution
   std::vector<std::thread> workers; // vector of worker threads
   // loop over sites running the post-order message passing algorithm
@@ -378,7 +392,7 @@ std::vector<std::vector<std::vector<double>>> phylogeny::edgewiseMarginalTransit
       end += extra;
     }
     workers.push_back(std::thread(&phylogeny::chunkEdgewiseMarginalTransitions, this, std::ref(expectedTransitions), std::ref(data),
-                                  std::ref(rateX), std::ref(piX),start, end));
+                                  std::ref(rateX), std::ref(piX),start, end, std::ref(include)));
     start = end;
     end = start + rows;
   }
@@ -396,7 +410,8 @@ void phylogeny::chunkNodewiseMarginalTransitions(std::vector<std::vector<std::ve
                                                  const std::vector<std::vector<double>>& data,
                                                  const std::vector<std::vector<double>>& rateX, 
                                                  const std::vector<std::vector<double>>& piX,
-                                                 unsigned int start, unsigned int end){
+                                                 unsigned int start, unsigned int end,
+                                                 const std::vector<bool> & include){
   for(unsigned int i=start;i<end;i++){
     // Computre the stationary distribution for site i
     arma::vec sitePi = pi(piX[i]);
@@ -404,6 +419,11 @@ void phylogeny::chunkNodewiseMarginalTransitions(std::vector<std::vector<std::ve
     std::vector<std::vector<double>> alpha = postorderMessagePassing(data[i], rateX[i], piX[i]);
     std::vector<std::vector<double>> beta = preorderMessagePassing(alpha, rateX[i], piX[i]);
     for(unsigned int e=0; e<edges.size();e++){
+      // Don't add edges that are excluded from sum
+      if(!include[e]){
+        // std::cout << "Skipping edge: " << edges[e][1] << std::endl;
+        continue;
+      }
       arma::mat transP(nAlleles,nAlleles,arma::fill::zeros); // The probability of each transition
       int parentInd=edges[e][0];
       int childInd=edges[e][1];
@@ -429,7 +449,9 @@ void phylogeny::chunkNodewiseMarginalTransitions(std::vector<std::vector<std::ve
   }
 }
 
-std::vector<std::vector<std::vector<double>>> phylogeny::nodewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,const unsigned int threads) {
+std::vector<std::vector<std::vector<double>>> phylogeny::nodewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,
+                                                                                     Rcpp::IntegerVector & exclude,
+                                                                                     const unsigned int threads) {
   // Type and dereference external pointers
   XPtr<std::vector<std::vector<double>>> d(dataPtr);
   std::vector<std::vector<double>> data = *d;
@@ -445,6 +467,17 @@ std::vector<std::vector<std::vector<double>>> phylogeny::nodewiseMarginalTransit
   unsigned int start = 0; // each thread does [start..end)
   unsigned int end = rows;
   
+  // Convert exclude to boolean include vector
+  std::vector<bool> include(edges.size(),true);
+  for(unsigned int i = 0; i < edges.size(); i++) {
+    for(unsigned int e = 0; e < exclude.size(); e++) {
+      if(edges[i][1] == exclude[e]){
+        include[i] = false;
+        break;
+      }
+    }
+  }
+  
   std::vector<std::vector<std::vector<double>>> expectedTransitions(sites,std::vector<std::vector<double>>(nAlleles,std::vector<double>(nAlleles))); // Marginal per site distribution
   std::vector<std::thread> workers; // vector of worker threads
   // loop over sites running the post-order message passing algorithm
@@ -453,7 +486,7 @@ std::vector<std::vector<std::vector<double>>> phylogeny::nodewiseMarginalTransit
       end += extra;
     }
     workers.push_back(std::thread(&phylogeny::chunkNodewiseMarginalTransitions, this, std::ref(expectedTransitions), std::ref(data),
-                                  std::ref(rateX), std::ref(piX),start, end));
+                                  std::ref(rateX), std::ref(piX),start, end, std::ref(include)));
     start = end;
     end = start + rows;
   }

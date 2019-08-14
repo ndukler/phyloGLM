@@ -6,18 +6,21 @@
 #' @name se
 #' @return a data.table with the parameter values and standard errors
 #' @export
-methods::setGeneric("se", function(model, hess = NULL) {
+methods::setGeneric("se", function(model, hess) {
   standardGeneric("se")
 })
 
 #' @name se
 #' @rdname se
 #' @aliases se,rateModel,rateModel-method
-methods::setMethod("se", signature(model = "rateModel", hess = "missing"), function(model, hess = NULL) {
+methods::setMethod("se", signature(model = "rateModel", hess = "missing"), function(model, hess) {
   ## Get parameter values
-  paramVals <- getParams(model)[which(!model@fixed)]
+  paramVals <- getParams(model)[!model@fixed]
+  ## Message about missing hessian
+  message("Hessian was not provided and is being computed (may take a long time):")
   ## Compute the hessian
-  hess <- numDeriv::hessian(func = phyloGLM:::scaledLL, x = paramVals, model = model, scale = 1)
+  hess <- numDeriv::hessian(func = scaledLL, x = paramVals, model = model, scale = 1,
+                            index = which(!model@fixed)-1)
   out <- se(paramVals, hess)
   return(out)
 })
