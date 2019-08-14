@@ -279,4 +279,23 @@ if (exists("rateMod")) {
     testthat::expect_true(rateMod_copy@fixed[6] != rateMod_original@fixed[6] &&
                             getParams(rateMod_copy)[6] != getParams(rateMod_original)[6])
   })
+  
+  ## -------------------------------------------------------------------------- ##
+  testthat::context("Test pairwise computation exclude functionality")
+  rateMod_import = unpack(readRDS(system.file("extdata", "rateMod.Rds", package="phyloGLM")))
+  edge_pair_trans = marginalTransitions(rateMod_import, aggregate = "edge")
+  edge_pair_trans_exclude = marginalTransitions(rateMod_import, aggregate = "edge", excludeNodes = 1:100)
+  node_pair_trans = marginalTransitions(rateMod_import, aggregate = "node")
+  node_pair_trans_exclude = marginalTransitions(rateMod_import, aggregate = "node", excludeEdges = c(1,2))
+  
+  testthat::test_that("Excluding specific node values works",{
+    testthat::expect_equal(Reduce(f = "+",edge_pair_trans_exclude),
+                             Reduce(f = "+",node_pair_trans[-1:-100]))
+  })
+
+  testthat::test_that("Excluding specific edge values works",{
+    testthat::expect_equal(Reduce(f = "+",edge_pair_trans[which(!getTree(rateMod_import)$edge[,2] %in% c(1,2))]),
+                           Reduce(f = "+", node_pair_trans_exclude))
+  })
+  
 }

@@ -47,12 +47,14 @@ private:
                                            const std::vector<std::vector<double>>& data,
                                            const std::vector<std::vector<double>>& rateX, 
                                            const std::vector<std::vector<double>>& piX,
-                                           unsigned int start, unsigned int end);
+                                           unsigned int start, unsigned int end,
+                                           const std::vector<bool> & include);
   void chunkNodewiseMarginalTransitions(std::vector<std::vector<std::vector<double>>>& expectedTransitions, 
                                                    const std::vector<std::vector<double>>& data,
                                                    const std::vector<std::vector<double>>& rateX, 
                                                    const std::vector<std::vector<double>>& piX,
-                                                   unsigned int start, unsigned int end);
+                                                   unsigned int start, unsigned int end,
+                                                   const std::vector<bool> & include);
     
 
 public:
@@ -73,8 +75,10 @@ public:
   std::vector<std::vector<std::vector<double>>> marginal(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,
                                                          const unsigned int threads);
   std::vector<std::vector<std::vector<double>>> edgewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,
-                                                                    const unsigned int threads);
+                                                                            Rcpp::IntegerVector & exclude, 
+                                                                            const unsigned int threads);
   std::vector<std::vector<std::vector<double>>> nodewiseMarginalTransitions(SEXP dataPtr, SEXP ratePtr,SEXP piPtr,
+                                                                            Rcpp::IntegerVector & exclude,
                                                                             const unsigned int threads);
   // Getters
   Rcpp::DataFrame getRateIndex();

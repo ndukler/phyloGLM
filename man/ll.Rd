@@ -9,6 +9,8 @@
 \item{model}{rateModel object}
 
 \item{threads}{number of threads to use}
+
+\item{index}{integer vector of parameter indicies in vector (0-based)}
 }
 \value{
 scaled log-likelihood

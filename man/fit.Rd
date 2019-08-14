@@ -6,7 +6,7 @@
 \arguments{
 \item{model}{rateModel}
 
-\item{scale}{a scale factor to apply to log-likelihood, defaults to -1/nsites}
+\item{scale}{a scale factor to apply to log-likelihood, defaults to -1}
 
 \item{method}{Optimization method to use ("bfgs","mlsl","stogo")}
 
