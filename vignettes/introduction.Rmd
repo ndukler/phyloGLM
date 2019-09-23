@@ -127,40 +127,23 @@ rMerged <- merge(si, rDist, by = "site")
 ## Plot rate dsitribution, split by enhancers and promoters
 g1 <- ggplot(rMerged, aes(x = cre.class, y = rate, fill = factor(edgeGroup))) +
   geom_boxplot(notch = TRUE) +
+  theme_cowplot()+
   theme(legend.position = "bottom")
 g2 <- ggplot(rMerged, aes(x = logXpress, y = rate, fill = factor(edgeGroup))) +
   geom_point() +
+  theme_cowplot()+
   theme(legend.position = "bottom")
 plot_grid(g1, g2, align = "h")
 ```
 
-We can also compute the number of turnover events, both per site and plot those and a function of the covariates.
+We can also compute the number of turnover events, and plot them on a tree if we want.
 
-```{r turnover_plots,fig.width=7, fig.height=3.5}
-## Compute expected number of transitions
-et <- marginalTransitions(rateMod, aggregate = "node")
-## Place data in plottable table and merge with covariates
-dat <- rbindlist(lapply(et, function(x) as.data.table(melt(x))), idcol = "site")
-setnames(dat, c("Var1", "Var2"), c("Anc", "Dec"))
-dat[, turnover := paste0(Anc, "->", Dec)]
-tDat <- merge(si, dat, by = "site")
-## Only keep elements that change allele (e.g. not 1-> 1)
-tDat <- tDat[Anc != Dec]
-tDat[, leDisc := cut(logXpress, breaks = quantile(logXpress, probs = seq(0, 1, 0.2)), include.lowest = TRUE)]
-# create boxplot
-p1 <- ggplot(tDat, aes(x = cre.class, y = value)) +
-  geom_boxplot(notch = TRUE, outlier.shape = NA) +
-  theme(legend.position = "bottom") +
-  ylab("Expected number of\nturnover events") +
-  ylim(0, 3)
-p2 <- ggplot(tDat, aes(x = leDisc, y = value)) +
-  geom_boxplot(notch = TRUE, outlier.shape = NA) +
-  theme(legend.position = "bottom") +
-  ylab("Expected number of\nturnover events") +
-  ylim(0, 3) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  xlab("Log(Expression)")
-plot_grid(p1, p2, align = "h")
+```{r turnover_plots,fig.width=6, fig.height=4}
+## Plot the expected number of transitions on the edges of the branches
+plotElementTransitions(rateMod)
+## A seperate function for getting a table of expected transitions.
+## Use if the actual numbers of expected transitions are desired.
+## phyloGLM::marginalTransitions(rateMod,aggregate = "edge")
 ```
 
 To get explicit p-values for specific parameters we can use the likelihood ratio test (since estimating the standard error via the hessian may not be reliable). To do that we must fit two models, one with (alternate model), and one without (null model) the parameter of interest (in this case the alternate model is the model we previously fit). Note how we are careful to set the formulas for the rate and stationary distributions seperately to ensure that the models differ by only one parameter. The models must also be nested in order for this test to be valid. A small p-value rejects the null model, concluding that the more complex model fits the data better, even given the additional degrees of freedom.
@@ -168,9 +151,11 @@ To get explicit p-values for specific parameters we can use the likelihood ratio
 ```{r coefficient_lrt}
 nullFormula <- formula(~ cre.class + 0)
 alternateFormula <- formula(~ cre.class + logXpress + 0)
-rateModNull <- updateFormula(model = rateMod, rateFormula = nullFormula, piFormula = alternateFormula)
-fitted_status_alternate <- fit(rateModNull, threads = 3)
+rateModNull = copy(rateMod)
+forceParameterZero(rateModNull,index = 2)
+fitted_status_alternate <- fit(rateModNull, threads = 3,control = list(trace = 0))
 lrt_expression <- lrt(h0 = rateModNull, hA = rateMod)
+print(lrt_expression)
 ```
 
 Models may also be compared usng the baysian information criterion (BIC) which does not require that the models be nested. The lower the BIC the better the model, in other words if BIC(alternate) < BIC(null), we can conclude that the alternate model provides a better fit to the data. In this case we perform BIC(alternate)-BIC(NULL), see a large negative value, and conclude that the alternate model is better.  
