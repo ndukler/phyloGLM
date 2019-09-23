@@ -36,11 +36,9 @@ methods::setMethod("plotTree", signature(model = "rateModel"), function(model,of
   temp <- data.table::copy(model@edgeGroups)
   setkey(temp,"child")
   g$data$group = temp[.(g$data$node),]$edgeGroup
-  if (requireNamespace("randomcoloR", quietly = TRUE)){
-    g=g+ggplot2::aes(color=index)+
-      ggplot2::scale_color_manual(values=randomcoloR::distinctColorPalette(length(levels(g$data$group))),breaks=levels(temp$group))
-  } else {
-    g=g+ggplot2::aes(color=group)
-  }
+  g$data[is.na(g$data$group),]$group = 0
+  g$data$group = factor(g$data$group)
+  g=g+ggplot2::aes(color=group)
+
   return(g)
 })
