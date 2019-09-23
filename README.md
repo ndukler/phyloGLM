@@ -7,7 +7,7 @@ devtools::install_github("ndukler/phyloGLM")
 
 NOTE: Please pull changes/re-install regularly, this package is still relatively new and as such, bugfixes and features are being added regularly.
 
-A prebuilt version of the vignette is published here (http://rpubs.com/ndukler/478097) but if you want to rebuild the included vignette to ensure that it is up to date, use:
+A prebuilt version of the vignette is published here (http://rpubs.com/ndukler/phyloGLMIntro) but if you want to rebuild the included vignette to ensure that it is up to date, use:
 
 devtools::install_github("ndukler/phyloGLM", build_vignettes = TRUE)
 
