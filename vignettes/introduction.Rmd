@@ -26,13 +26,13 @@ Currently, phyloGLM is not available on CRAN so the only way to install it is fr
 We need several elements to construct a rate model. The first is a tree, which, in this case, we read in from newick format using read.tree from the ape package.
 
 ```{r read_tree, warning=FALSE,message=FALSE}
-library(phyloGLM)
 library(ggplot2)
 library(cowplot)
 library(scales)
 library(reshape2)
 library(data.table)
 library(ape)
+library(phyloGLM)
 
 ## Read in a sample tree
 tree=read.tree(system.file("extdata", "sampleTree.nh", package="phyloGLM"))
