@@ -26,7 +26,8 @@ Suggests:
     testthat,
     knitr,
     rmarkdown,
-    randomcoloR
+    randomcoloR,
+    covr
 Encoding: UTF-8
 RoxygenNote: 6.1.1
 Collate: 
